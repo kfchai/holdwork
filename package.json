@@ -15,7 +15,8 @@
     "smoke:remote": "tsx scripts/smoke-remote.ts",
     "live:dispute": "tsx scripts/live-dispute.ts",
     "try:scorer": "tsx scripts/try-scorer.ts",
-    "wallet:new": "tsx scripts/new-wallet.ts"
+    "wallet:new": "tsx scripts/new-wallet.ts",
+    "moltbook": "tsx scripts/moltbook-post.ts"
   },
   "keywords": [],
   "author": "",
