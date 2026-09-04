@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "holdwork",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Secrets, set with `wrangler secret put <NAME> -c worker/wrangler.jsonc`:
+  //   HOLDWORK_NETWORK_KEY   HMAC key for sampling and verifier selection (required in production)
+  //   HOLDWORK_TOKEN         shared bearer token for /mcp (pilot auth)
+  //   ANTHROPIC_API_KEY      enables model-backed verifiers
+  //   HOLDWORK_AUTO_VERIFIERS comma-separated verifier ids this deployment attests for
+  "durable_objects": {
+    "bindings": [
+      { "name": "HOLDWORK_LEDGER", "class_name": "HoldworkLedger" },
+      { "name": "HOLDWORK_MCP", "class_name": "HoldworkMcp" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["HoldworkLedger", "HoldworkMcp"] }
+  ]
+}

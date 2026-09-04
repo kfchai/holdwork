@@ -46,8 +46,8 @@ export class ClaudeScorer implements Scorer {
   private readonly client: Anthropic;
   private readonly model: string;
 
-  constructor(opts: { client?: Anthropic; model?: string } = {}) {
-    this.client = opts.client ?? new Anthropic();
+  constructor(opts: { client?: Anthropic; model?: string; apiKey?: string } = {}) {
+    this.client = opts.client ?? new Anthropic(opts.apiKey ? { apiKey: opts.apiKey } : undefined);
     this.model = opts.model ?? 'claude-opus-5';
     this.name = `claude:${this.model}`;
   }

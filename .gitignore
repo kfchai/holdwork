@@ -3,3 +3,5 @@ dist/
 build/
 holdwork-state.json
 .env
+worker/worker-configuration.d.ts
+.smoke-state.json
