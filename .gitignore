@@ -8,3 +8,4 @@ worker/worker-configuration.d.ts
 .wrangler/
 **/.wrangler/
 secrets.txt
+*.log
