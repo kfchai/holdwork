@@ -5,49 +5,35 @@
  *
  * State persists to HOLDWORK_STATE (default ./holdwork-state.json) after every call.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { HoldworkEngine, HoldworkError, Ledger, usdc, fmt, type Contract, type Agent } from '../core/index.js';
+import { HoldworkError, usdc, fmt, type Contract, type Agent } from '../core/index.js';
+import { loadEngine, saveEngine } from '../store/file-store.js';
+import { AutoVerifier, ClaudeScorer } from '../verifier/index.js';
 
 const STATE_PATH = process.env.HOLDWORK_STATE ?? './holdwork-state.json';
 const NETWORK_KEY = process.env.HOLDWORK_NETWORK_KEY ?? 'dev-network-key-change-me';
+/** Comma-separated verifier agent ids this process attests for using the model scorer. */
+const AUTO_VERIFIERS = (process.env.HOLDWORK_AUTO_VERIFIERS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
-// ───────────── persistence (poor man's database: one JSON file) ─────────────
+const engine = loadEngine(STATE_PATH, NETWORK_KEY);
+const save = () => saveEngine(STATE_PATH, engine);
 
-function serialize(engine: HoldworkEngine): string {
-  return JSON.stringify(
-    {
-      ledger: engine.ledger.snapshot(),
-      agents: [...engine.agents.values()],
-      operators: [...engine.operators.values()],
-      contracts: [...engine.contracts.values()],
-      pairs: [...engine.pairs.values()],
-    },
-    (_k, v) => (typeof v === 'bigint' ? { $micro: v.toString() } : v),
-    2,
-  );
+const autoVerifier = AUTO_VERIFIERS.length
+  ? new AutoVerifier(engine, new ClaudeScorer({ model: process.env.HOLDWORK_SCORER_MODEL }), AUTO_VERIFIERS)
+  : null;
+
+/** After any state change, let model verifiers attest on rounds they were assigned to. */
+async function autoVerify(): Promise<void> {
+  if (!autoVerifier || autoVerifier.pending().length === 0) return;
+  try {
+    await autoVerifier.run();
+  } catch (e) {
+    // Scoring failure must never break the caller's operation; the round stays open for a retry.
+    console.error(`[holdwork] auto-verify failed: ${String(e)}`);
+  }
 }
-
-function revive(_k: string, v: unknown): unknown {
-  if (v && typeof v === 'object' && '$micro' in (v as Record<string, unknown>)) return BigInt((v as { $micro: string }).$micro);
-  return v;
-}
-
-function load(): HoldworkEngine {
-  if (!existsSync(STATE_PATH)) return new HoldworkEngine({ networkKey: NETWORK_KEY });
-  const raw = JSON.parse(readFileSync(STATE_PATH, 'utf8'), revive);
-  const engine = new HoldworkEngine({ networkKey: NETWORK_KEY, ledger: Ledger.fromSnapshot(raw.ledger) });
-  for (const a of raw.agents as Agent[]) engine.agents.set(a.id, a);
-  for (const o of raw.operators) engine.operators.set(o.id, o);
-  for (const c of raw.contracts as Contract[]) engine.contracts.set(c.id, c);
-  for (const p of raw.pairs) engine.pairs.set(`${p.buyerId}→${p.sellerId}`, p);
-  return engine;
-}
-
-const engine = load();
-const save = () => writeFileSync(STATE_PATH, serialize(engine));
 
 // ───────────── presentation ─────────────
 
@@ -99,9 +85,11 @@ function agentView(a: Agent) {
   };
 }
 
-function run<T>(fn: () => T) {
+async function run<T>(fn: () => T) {
   try {
     const result = fn();
+    save();
+    await autoVerify();
     save();
     return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
   } catch (e) {
@@ -203,6 +191,18 @@ server.tool('get_agent', 'Agent profile, reputation, calibration and balance.', 
 
 server.tool('tick', 'Apply deadline-driven transitions (cancel, expire, escalate). Returns contracts that changed.', {},
   () => run(() => engine.tick().map(view)));
+
+server.tool('run_verifiers', 'Have this server\'s model-backed verifiers score and attest on any rounds they are assigned to.', {},
+  async () => {
+    if (!autoVerifier) return { content: [{ type: 'text' as const, text: JSON.stringify({ configured: false, hint: 'set HOLDWORK_AUTO_VERIFIERS' }) }] };
+    try {
+      const done = await autoVerifier.run();
+      save();
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ configured: true, attested: done }, null, 2) }] };
+    } catch (e) {
+      return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify({ code: 'SCORER_ERROR', message: String(e) }) }] };
+    }
+  });
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

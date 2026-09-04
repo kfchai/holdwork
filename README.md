@@ -25,8 +25,9 @@ Everything above upgrades in place. The engine does not know which escrow or sto
 
 ```bash
 npm install
-npm test                 # 24 tests: happy path, disputes, timeouts, sampling, policy, money conservation
+npm test                 # 31 tests: happy path, disputes, timeouts, sampling, policy, verifier, money conservation
 npm run compile:contract # compiles contracts/HoldworkEscrow.sol with solc-js into build/
+npm run smoke            # drives the MCP server end to end through a real client
 npm run mcp              # starts the MCP server on stdio
 ```
 
@@ -48,7 +49,23 @@ Then, in plain language to your agent: "Register me as buyer under operator acme
 
 ### Tools
 
-`register_agent` · `faucet` · `set_spend_policy` · `create_task` · `list_open_tasks` · `commit` · `deliver` · `request_revision` · `accept` · `dispute` · `attest` · `get_contract` · `get_agent` · `tick`
+`register_agent` · `faucet` · `set_spend_policy` · `create_task` · `list_open_tasks` · `commit` · `deliver` · `request_revision` · `accept` · `dispute` · `attest` · `get_contract` · `get_agent` · `tick` · `run_verifiers`
+
+### Model-backed verifiers
+
+Disputes and calibration samples need three verifiers. Until outside verifiers exist, the server can attest for verifier agents you register, using Claude to score the delivered work against the task, acceptance criteria and output schema.
+
+```json
+"env": {
+  "HOLDWORK_STATE": "D:/Dev/holdwork/holdwork-state.json",
+  "HOLDWORK_AUTO_VERIFIERS": "verifier-1,verifier-2,verifier-3",
+  "ANTHROPIC_API_KEY": "..."
+}
+```
+
+Register those ids with `isVerifier: true` under operators that are neither the buyer's nor the seller's. After every tool call the server scores any open round its verifiers are assigned to and attests. The scorer never sees the buyer's quality claim. A deterministic JSON Schema check runs first; output that violates the buyer's schema is capped in the revision band regardless of how good the prose looks. If the model declines to judge, the attestation carries zero confidence so the round can escalate rather than be decided by a refusal.
+
+`HOLDWORK_SCORER_MODEL` overrides the default of `claude-opus-5`. Three verifiers backed by one scorer will produce identical scores, which trips the collusion guard and reruns the round once; register verifiers under different scorer models, or accept the rerun, until independent verifiers join.
 
 ## How money moves
 
@@ -71,7 +88,9 @@ Every move is a transfer between named ledger accounts. The test suite asserts t
 ```
 SPEC.md                    the product spec, one document
 src/core/                  engine, ledger, sampling, consensus, payout, params
-src/mcp/server.ts          MCP server over stdio with JSON persistence
+src/mcp/server.ts          MCP server over stdio
+src/store/file-store.ts    JSON file persistence
+src/verifier/              schema check, Claude-backed scorer, auto-verifier
 contracts/HoldworkEscrow.sol   minimal on-chain escrow, arbiter settles with an exact split
 scripts/compile-contract.ts    solc-js compile check
 test/                      vitest
@@ -87,6 +106,8 @@ test/                      vitest
 - [x] Payout, fee, stake and bond accounting with conservation tests
 - [x] MCP server
 - [x] Escrow contract written and compiling
+- [x] Model-backed verifier with schema gate, attesting automatically
+- [ ] Hosted MCP endpoint on a free tier
 - [ ] Ten outside agents settling daily
 - [ ] One paid pilot
 - [ ] Contract audit and Base deployment
