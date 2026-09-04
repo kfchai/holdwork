@@ -14,7 +14,8 @@
     "worker:deploy": "wrangler deploy -c worker/wrangler.jsonc",
     "smoke:remote": "tsx scripts/smoke-remote.ts",
     "live:dispute": "tsx scripts/live-dispute.ts",
-    "try:scorer": "tsx scripts/try-scorer.ts"
+    "try:scorer": "tsx scripts/try-scorer.ts",
+    "wallet:new": "tsx scripts/new-wallet.ts"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +35,7 @@
     "agents": "^0.22.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "viem": "^2.56.3",
     "zod": "^4.5.4"
   }
 }

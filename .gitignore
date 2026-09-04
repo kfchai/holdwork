@@ -9,3 +9,4 @@ worker/worker-configuration.d.ts
 **/.wrangler/
 secrets.txt
 *.log
+.wallet/
