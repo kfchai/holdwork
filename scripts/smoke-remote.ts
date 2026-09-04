@@ -13,7 +13,7 @@ if (existsSync('.env')) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
   }
 }
-const url = process.env.HOLDWORK_URL ?? 'https://holdwork.kfchai.workers.dev';
+const url = process.env.HOLDWORK_URL ?? 'https://holdwork.cortexum.ai';
 const token = process.env.HOLDWORK_TOKEN;
 if (!token) throw new Error('HOLDWORK_TOKEN missing (set in .env or the environment)');
 

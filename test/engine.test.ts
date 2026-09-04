@@ -142,6 +142,23 @@ describe('dispute', () => {
     expect(eng.ledger.total()).toBe(usdc(110));
   });
 
+  it('a zero-confidence attestation has no weight and earns no fee', () => {
+    const { eng } = setup();
+    const c = eng.createTask({ buyerId: 'buyer', title: 't', description: 'd', category: 'research', price: usdc(20) });
+    eng.commit(c.id, 'seller');
+    eng.deliver(c.id, 'seller', {}, compute);
+    eng.dispute(c.id, 'buyer', 0.4, 'x');
+    const [a, b, d] = eng.contract(c.id).verification[0].verifierIds;
+    eng.attest(c.id, a, 0.40, 0.9);
+    eng.attest(c.id, b, 0.44, 0.9);
+    eng.attest(c.id, d, 0.5, 0); // scorer failed: neutral quality, zero confidence
+    const s = eng.contract(c.id).settlement!;
+    expect(s.quality).toBeCloseTo(0.42, 2); // the 0.5 did not pull the consensus
+    expect(s.verifierFeesPaid).toBe(usdc('0.10'));
+    expect(eng.balance(d)).toBe(0n);
+    expect(eng.ledger.total()).toBe(usdc(110));
+  });
+
   it('flags suspiciously uniform verifier scores and reruns with fresh verifiers', () => {
     const { eng } = setup();
     const c = eng.createTask({ buyerId: 'buyer', title: 't', description: 'd', category: 'research', price: usdc(20) });

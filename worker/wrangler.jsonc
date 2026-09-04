@@ -5,10 +5,12 @@
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  "routes": [{ "pattern": "holdwork.cortexum.ai", "custom_domain": true }],
   // Secrets, set with `wrangler secret put <NAME> -c worker/wrangler.jsonc`:
   //   HOLDWORK_NETWORK_KEY   HMAC key for sampling and verifier selection (required in production)
   //   HOLDWORK_TOKEN         shared bearer token for /mcp (pilot auth)
-  //   ANTHROPIC_API_KEY      enables model-backed verifiers
+  //   HOLDWORK_SCORER        "openrouter:<model>" or "claude:<model>"
+  //   OPENROUTER_API_KEY / ANTHROPIC_API_KEY   key for the chosen provider
   //   HOLDWORK_AUTO_VERIFIERS comma-separated verifier ids this deployment attests for
   "durable_objects": {
     "bindings": [

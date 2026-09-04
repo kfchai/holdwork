@@ -12,7 +12,9 @@
     "worker:types": "wrangler types -c worker/wrangler.jsonc",
     "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
     "worker:deploy": "wrangler deploy -c worker/wrangler.jsonc",
-    "smoke:remote": "tsx scripts/smoke-remote.ts"
+    "smoke:remote": "tsx scripts/smoke-remote.ts",
+    "live:dispute": "tsx scripts/live-dispute.ts",
+    "try:scorer": "tsx scripts/try-scorer.ts"
   },
   "keywords": [],
   "author": "",

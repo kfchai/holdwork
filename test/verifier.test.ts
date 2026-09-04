@@ -58,10 +58,10 @@ describe('auto verifier', () => {
     const done = await auto.run();
 
     expect(done).toHaveLength(3);
-    expect(scorer.seen).toHaveLength(1); // one scoring call shared by three verifiers
+    expect(scorer.seen).toHaveLength(3); // independent scoring call per verifier
     const settled = eng.contract(c.id);
-    // identical scores from one scorer trip the collusion guard: a rerun opens with the same pool
-    // (only 3 verifiers exist), so run once more to settle.
+    // a deterministic fake gives identical scores, which trips the collusion guard: a rerun opens
+    // with the same pool (only 3 verifiers exist), so run once more to settle.
     if (settled.state === 'VERIFYING') await auto.run();
     expect(eng.contract(c.id).state).toBe('SETTLED');
     expect(eng.contract(c.id).settlement!.qualitySource).toBe('NETWORK');

@@ -453,7 +453,7 @@ export class HoldworkEngine {
 
     let feesPaidBy: Settlement['verifierFeesPaidBy'] = 'HOLDWORK';
     let bondReturned = 0n, bondForfeited = 0n, stakeForfeitedForFees = 0n, verifierFeesPaid = 0n;
-    const fees = this.params.verifierFee * BigInt(round.attestations.length);
+    const fees = this.params.verifierFee * BigInt(round.attestations.filter((a) => a.confidence > 0).length);
 
     if (hadBond && !vindicated) {
       // Buyer lost the dispute: bond pays verifiers, remainder to Holdwork.
@@ -496,12 +496,16 @@ export class HoldworkEngine {
     this.log(c, 'DISPUTE_RESOLVED', undefined, { quality, vindicated, feesPaidBy });
   }
 
-  /** Pay each attesting verifier the fixed fee from `from`, up to `cap`. Returns the total paid. */
+  /**
+   * Pay each attesting verifier the fixed fee from `from`, up to `cap`. Returns the total paid.
+   * A zero-confidence attestation carries no weight in consensus and earns no fee.
+   */
   private payVerifiers(c: Contract, round: VerificationRound, from: string, cap?: Micro): Micro {
     const now = this.now();
     let paid = 0n;
-    let remaining = cap ?? this.params.verifierFee * BigInt(round.attestations.length);
-    for (const a of round.attestations) {
+    const payable = round.attestations.filter((a) => a.confidence > 0);
+    let remaining = cap ?? this.params.verifierFee * BigInt(payable.length);
+    for (const a of payable) {
       const amt = minMicro(this.params.verifierFee, remaining);
       if (amt <= 0n) break;
       if (from === FEE_ACCOUNT && this.ledger.balance(FEE_ACCOUNT) < amt) break; // Holdwork pays only what it has

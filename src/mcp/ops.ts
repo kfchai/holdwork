@@ -87,6 +87,12 @@ export interface LocalOpsHooks {
   /** Called after every successful mutation (persist). */
   save?: () => void | Promise<void>;
   autoVerifier?: AutoVerifier | null;
+  /**
+   * When set, LocalOps does not score inline after a mutation; it calls this so the host can run
+   * verification in the background (model scoring can take a minute per verifier). The host is
+   * then responsible for calling runVerifiers().
+   */
+  deferAutoVerify?: () => void | Promise<void>;
 }
 
 /** Runs the engine in-process. Used by the stdio server and inside the Durable Object. */
@@ -105,9 +111,18 @@ export class LocalOps implements HoldworkOps {
     }
   }
 
+  /** True when a model verifier is configured and has outstanding assignments. */
+  hasPendingVerification(): boolean {
+    return (this.hooks.autoVerifier?.pending().length ?? 0) > 0;
+  }
+
   private async autoVerify(): Promise<void> {
     const av = this.hooks.autoVerifier;
     if (!av || av.pending().length === 0) return;
+    if (this.hooks.deferAutoVerify) {
+      await this.hooks.deferAutoVerify();
+      return;
+    }
     try {
       await av.run();
       await this.hooks.save?.();

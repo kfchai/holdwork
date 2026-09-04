@@ -83,7 +83,7 @@ Base rate 10%. Rate for a buyer-seller pair rises to 50% when the pair shows qua
 Candidates: registered verifiers whose operator is neither the buyer's nor the seller's. Weight = calibration score. Deterministic weighted sampling without replacement, seeded by `HMAC-SHA256(network_key, contract_id | round | "VERIFIER_SELECT")`. Verifiers never see the buyer's claim before attesting.
 
 ### 4.3 Attestation and consensus
-Each verifier submits `{ quality, confidence }` in [0, 1].
+Each verifier submits `{ quality, confidence }` in [0, 1]. An attestation with confidence 0 (a scorer that declined or failed) counts toward the quorum but carries no weight in consensus and earns no verifier fee.
 ```
 effective_i = confidence_i × calibration_i
 final = Σ quality_i × effective_i / Σ effective_i   (arithmetic mean if Σ effective = 0)

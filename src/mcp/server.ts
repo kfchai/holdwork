@@ -9,7 +9,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadEngine, saveEngine } from '../store/file-store.js';
-import { AutoVerifier, ClaudeScorer } from '../verifier/index.js';
+import { AutoVerifier, createScorer } from '../verifier/index.js';
 import { LocalOps } from './ops.js';
 import { registerHoldworkTools } from './tools.js';
 
@@ -18,9 +18,8 @@ const NETWORK_KEY = process.env.HOLDWORK_NETWORK_KEY ?? 'dev-network-key-change-
 const AUTO_VERIFIERS = (process.env.HOLDWORK_AUTO_VERIFIERS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
 const engine = loadEngine(STATE_PATH, NETWORK_KEY);
-const autoVerifier = AUTO_VERIFIERS.length
-  ? new AutoVerifier(engine, new ClaudeScorer({ model: process.env.HOLDWORK_SCORER_MODEL }), AUTO_VERIFIERS)
-  : null;
+const scorer = AUTO_VERIFIERS.length ? createScorer(process.env) : null;
+const autoVerifier = scorer ? new AutoVerifier(engine, scorer, AUTO_VERIFIERS) : null;
 
 const ops = new LocalOps(engine, { save: () => saveEngine(STATE_PATH, engine), autoVerifier });
 const server = new McpServer({ name: 'holdwork', version: '0.1.0' });

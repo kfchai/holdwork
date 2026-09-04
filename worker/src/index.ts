@@ -14,7 +14,7 @@ import { McpAgent } from 'agents/mcp';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HoldworkEngine, type ComputeReport } from '../../src/core/index.js';
 import { deserializeEngine, serializeEngine } from '../../src/store/serialize.js';
-import { AutoVerifier, ClaudeScorer } from '../../src/verifier/index.js';
+import { AutoVerifier, createScorer } from '../../src/verifier/index.js';
 import { LocalOps, type HoldworkOps, type OpResult } from '../../src/mcp/ops.js';
 import { registerHoldworkTools } from '../../src/mcp/tools.js';
 
@@ -24,11 +24,16 @@ export interface Env {
   HOLDWORK_NETWORK_KEY?: string;
   HOLDWORK_TOKEN?: string;
   HOLDWORK_AUTO_VERIFIERS?: string;
-  HOLDWORK_SCORER_MODEL?: string;
+  /** e.g. "openrouter:z-ai/glm-5.3-flash" or "claude:claude-opus-5" */
+  HOLDWORK_SCORER?: string;
+  OPENROUTER_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
 }
 
 const STATE_KEY = 'engine';
+const VERIFY_DELAY_MS = 1_000;
+const VERIFY_RETRY_MS = 60_000;
+const SWEEP_INTERVAL_MS = 10 * 60_000;
 
 // ───────────────────────── the ledger ─────────────────────────
 
@@ -41,15 +46,23 @@ export class HoldworkLedger extends DurableObject<Env> {
       const json = await this.ctx.storage.get<string>(STATE_KEY);
       const engine = json ? deserializeEngine(json, networkKey) : new HoldworkEngine({ networkKey });
       const verifierIds = (this.env.HOLDWORK_AUTO_VERIFIERS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-      const autoVerifier = verifierIds.length && this.env.ANTHROPIC_API_KEY
-        ? new AutoVerifier(engine, new ClaudeScorer({ model: this.env.HOLDWORK_SCORER_MODEL, apiKey: this.env.ANTHROPIC_API_KEY }), verifierIds)
-        : null;
+      const scorer = verifierIds.length ? createScorer(this.env) : null;
+      const autoVerifier = scorer ? new AutoVerifier(engine, scorer, verifierIds) : null;
       return new LocalOps(engine, {
         save: () => this.ctx.storage.put(STATE_KEY, serializeEngine(engine)),
         autoVerifier,
+        // Scoring takes up to a minute per verifier; never make the caller wait for it.
+        deferAutoVerify: () => this.armAlarm(VERIFY_DELAY_MS),
       });
     })();
     return this.ops;
+  }
+
+  /** Move the alarm earlier if needed; never later. */
+  private async armAlarm(delayMs: number): Promise<void> {
+    const at = Date.now() + delayMs;
+    const current = await this.ctx.storage.getAlarm();
+    if (current === null || current > at) await this.ctx.storage.setAlarm(at);
   }
 
   // One RPC method per op. Explicit rather than a generic dispatcher so the surface is auditable.
@@ -69,14 +82,19 @@ export class HoldworkLedger extends DurableObject<Env> {
   async tick() { return (await this.getOps()).tick(); }
   async runVerifiers() { return (await this.getOps()).runVerifiers(); }
 
-  /** Deadline sweep. The alarm re-arms itself every 10 minutes. */
+  /**
+   * Background work: sweep deadlines, then let model verifiers attest on anything pending.
+   * Re-arms in 1 minute while verification is outstanding, otherwise every 10 minutes.
+   */
   async alarm() {
-    await (await this.getOps()).tick();
-    await this.ctx.storage.setAlarm(Date.now() + 10 * 60 * 1000);
+    const ops = await this.getOps();
+    await ops.tick();
+    if (ops.hasPendingVerification()) await ops.runVerifiers();
+    await this.ctx.storage.setAlarm(Date.now() + (ops.hasPendingVerification() ? VERIFY_RETRY_MS : SWEEP_INTERVAL_MS));
   }
 
   async ensureAlarm() {
-    if ((await this.ctx.storage.getAlarm()) === null) await this.ctx.storage.setAlarm(Date.now() + 60 * 1000);
+    await this.armAlarm(60 * 1000);
   }
 
   async stats() {

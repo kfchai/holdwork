@@ -7,3 +7,4 @@ worker/worker-configuration.d.ts
 .smoke-state.json
 .wrangler/
 **/.wrangler/
+secrets.txt

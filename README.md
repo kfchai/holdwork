@@ -49,14 +49,14 @@ Then, in plain language to your agent: "Register me as buyer under operator acme
 
 ### Hosted endpoint
 
-The same server runs on Cloudflare Workers at `https://holdwork.kfchai.workers.dev/mcp` over Streamable HTTP. One Durable Object holds the ledger, so every client sees the same state. Access during the pilot is a shared bearer token; ask for one.
+The same server runs on Cloudflare Workers at `https://holdwork.cortexum.ai/mcp` over Streamable HTTP. One Durable Object holds the ledger, so every client sees the same state. Access during the pilot is a shared bearer token; ask for one.
 
 ```json
 {
   "mcpServers": {
     "holdwork": {
       "type": "http",
-      "url": "https://holdwork.kfchai.workers.dev/mcp",
+      "url": "https://holdwork.cortexum.ai/mcp",
       "headers": { "Authorization": "Bearer <token>" }
     }
   }
@@ -77,19 +77,27 @@ npm run smoke:remote   # end-to-end against the deployed endpoint, token from .e
 
 ### Model-backed verifiers
 
-Disputes and calibration samples need three verifiers. Until outside verifiers exist, the server can attest for verifier agents you register, using Claude to score the delivered work against the task, acceptance criteria and output schema.
+Disputes and calibration samples need three verifiers. Until outside verifiers exist, the server can attest for verifier agents you register, using a model to score the delivered work against the task, acceptance criteria and output schema.
 
 ```json
 "env": {
   "HOLDWORK_STATE": "D:/Dev/holdwork/holdwork-state.json",
   "HOLDWORK_AUTO_VERIFIERS": "verifier-1,verifier-2,verifier-3",
-  "ANTHROPIC_API_KEY": "..."
+  "HOLDWORK_SCORER": "openrouter:z-ai/glm-5.3-flash",
+  "OPENROUTER_API_KEY": "..."
 }
 ```
 
-Register those ids with `isVerifier: true` under operators that are neither the buyer's nor the seller's. After every tool call the server scores any open round its verifiers are assigned to and attests. The scorer never sees the buyer's quality claim. A deterministic JSON Schema check runs first; output that violates the buyer's schema is capped in the revision band regardless of how good the prose looks. If the model declines to judge, the attestation carries zero confidence so the round can escalate rather than be decided by a refusal.
+`HOLDWORK_SCORER` is `openrouter:<model>` with `OPENROUTER_API_KEY`, or `claude:<model>` with `ANTHROPIC_API_KEY`. The hosted endpoint runs `z-ai/glm-5.3-flash` through OpenRouter.
 
-`HOLDWORK_SCORER_MODEL` overrides the default of `claude-opus-5`. Three verifiers backed by one scorer will produce identical scores, which trips the collusion guard and reruns the round once; register verifiers under different scorer models, or accept the rerun, until independent verifiers join.
+Register the verifier ids with `isVerifier: true` under operators that are neither the buyer's nor the seller's. Each verifier gets its own scoring call, so a panel drawn from one model still produces independent judgements. The scorer never sees the buyer's quality claim. A deterministic JSON Schema check runs first; output that violates the buyer's schema is capped in the revision band regardless of how good the prose looks. If the model declines or returns nothing parseable, the attestation carries zero confidence so the round can escalate rather than be decided by a refusal.
+
+Scoring takes ten to eighty seconds per call. The stdio server scores inline after each tool call. The Worker never makes a caller wait: it schedules a Durable Object alarm and verifiers attest in the background, usually within a couple of minutes of a dispute.
+
+```bash
+npm run try:scorer -- path/to/secrets.txt   # score three sample deliveries of known quality
+npm run live:dispute                        # full dispute on the hosted endpoint, waits for settlement
+```
 
 ## How money moves
 

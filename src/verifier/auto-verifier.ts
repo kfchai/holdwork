@@ -3,6 +3,8 @@
  * agent is assigned and has not attested, score the delivered work, and attest.
  *
  * Runs inside the same process as the engine so there is a single writer to the state.
+ * By default every verifier gets its own scoring call, so a panel drawn from one model still
+ * produces independent judgements rather than three copies of one.
  */
 import { HoldworkEngine, type Contract } from '../core/index.js';
 import type { Scorer, ScoringInput } from './types.js';
@@ -17,11 +19,17 @@ export interface AutoAttestation {
   scorer: string;
 }
 
+export interface AutoVerifierOptions {
+  /** Share one scoring call across all of our verifiers on a contract. Cheaper, but identical scores trip the collusion guard. */
+  shareScore?: boolean;
+}
+
 export class AutoVerifier {
   constructor(
     private readonly engine: HoldworkEngine,
     private readonly scorer: Scorer,
     private readonly verifierIds: string[],
+    private readonly opts: AutoVerifierOptions = {},
   ) {}
 
   /** Find every (contract, verifier) pair with an outstanding assignment. */
@@ -39,7 +47,7 @@ export class AutoVerifier {
     return out;
   }
 
-  /** Score and attest every pending assignment. One scoring call per contract, shared by our verifiers on it. */
+  /** Score and attest every pending assignment. */
   async run(): Promise<AutoAttestation[]> {
     const done: AutoAttestation[] = [];
     const byContract = new Map<string, Array<{ verifierId: string; round: number }>>();
@@ -50,11 +58,13 @@ export class AutoVerifier {
     }
     for (const [contractId, assignments] of byContract) {
       const c = this.engine.contract(contractId);
-      const score = await this.scorer.score(toScoringInput(c));
+      const input = toScoringInput(c);
+      const shared = this.opts.shareScore ? await this.scorer.score(input) : null;
       for (const a of assignments) {
         // The round may have closed after an earlier attestation in this loop; re-check.
         const round = c.verification[c.verification.length - 1];
         if (!round || round.result || round.round !== a.round) continue;
+        const score = shared ?? (await this.scorer.score(input));
         this.engine.attest(c.id, a.verifierId, score.quality, score.confidence);
         c.events.push({
           at: this.engine.now(), type: 'AUTO_ATTESTED', by: a.verifierId,
