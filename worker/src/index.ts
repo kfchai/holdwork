@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HoldworkEngine, type ComputeReport } from '../../src/core/index.js';
 import { deserializeEngine, serializeEngine } from '../../src/store/serialize.js';
 import { AutoVerifier, createScorer } from '../../src/verifier/index.js';
-import { LocalOps, type HoldworkOps, type OpResult } from '../../src/mcp/ops.js';
+import { LocalOps, type HoldworkOps, type OpResult, type Stats } from '../../src/mcp/ops.js';
 import { registerHoldworkTools } from '../../src/mcp/tools.js';
 
 export interface Env {
@@ -97,11 +97,7 @@ export class HoldworkLedger extends DurableObject<Env> {
     await this.armAlarm(60 * 1000);
   }
 
-  async stats() {
-    const ops = await this.getOps();
-    const r = await ops.listOpenTasks({});
-    return { openTasks: r.ok ? (r.result as unknown[]).length : null };
-  }
+  async stats() { return (await this.getOps()).stats(); }
 }
 
 // ───────────────────────── the MCP front door ─────────────────────────
@@ -127,6 +123,7 @@ function ledgerOps(env: Env): HoldworkOps {
     getAgent: (a) => call(stub.getAgent(a)),
     tick: () => call(stub.tick()),
     runVerifiers: () => call(stub.runVerifiers()),
+    stats: () => call(stub.stats()) as Promise<OpResult<Stats>>,
   };
 }
 
@@ -140,25 +137,56 @@ export class HoldworkMcp extends McpAgent<Env> {
 
 // ───────────────────────── router ─────────────────────────
 
-function authorized(request: Request, env: Env): boolean {
-  if (!env.HOLDWORK_TOKEN) return true; // no token configured: open (dev only)
+/**
+ * Pilot auth. HOLDWORK_TOKEN holds one or more tokens, comma separated, each optionally
+ * prefixed with a partner name: "acme:abc123,internal:def456". Any listed token is accepted and
+ * one partner can be revoked without rotating the others. Returns the partner name, or null.
+ */
+function authorizedPartner(request: Request, env: Env): string | null {
+  if (!env.HOLDWORK_TOKEN) return 'open'; // no token configured: open (dev only)
   const header = request.headers.get('authorization') ?? '';
-  return header === `Bearer ${env.HOLDWORK_TOKEN}`;
+  const presented = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!presented) return null;
+  for (const entry of env.HOLDWORK_TOKEN.split(',')) {
+    const idx = entry.indexOf(':');
+    const name = idx === -1 ? 'default' : entry.slice(0, idx).trim();
+    const token = (idx === -1 ? entry : entry.slice(idx + 1)).trim();
+    if (token && timingSafeEqualStr(token, presented)) return name;
+  }
+  return null;
+}
+
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    const ledger = env.HOLDWORK_LEDGER.get(env.HOLDWORK_LEDGER.idFromName('main'));
 
     if (url.pathname === '/' || url.pathname === '/health') {
-      const ledger = env.HOLDWORK_LEDGER.get(env.HOLDWORK_LEDGER.idFromName('main'));
       ctx.waitUntil(ledger.ensureAlarm());
-      const stats = await ledger.stats();
-      return Response.json({ service: 'holdwork', version: '0.1.0', mcp: '/mcp', auth: env.HOLDWORK_TOKEN ? 'bearer' : 'open', ...stats });
+      const r = await ledger.stats();
+      const s = r.ok ? r.result : null;
+      return Response.json({
+        service: 'holdwork', version: '0.1.0', mcp: '/mcp', auth: env.HOLDWORK_TOKEN ? 'bearer' : 'open',
+        openTasks: s?.contractsByState.OPEN ?? 0, settled: s?.settled ?? 0, disputes: s?.disputes ?? 0,
+      });
+    }
+
+    if (url.pathname === '/stats') {
+      if (!authorizedPartner(request, env)) return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': 'Bearer' } });
+      const r = await ledger.stats();
+      return Response.json(r.ok ? r.result : { error: r.error });
     }
 
     if (url.pathname.startsWith('/mcp')) {
-      if (!authorized(request, env)) return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': 'Bearer' } });
+      const partner = authorizedPartner(request, env);
+      if (!partner) return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': 'Bearer' } });
       return HoldworkMcp.serve('/mcp', { binding: 'HOLDWORK_MCP' }).fetch(request, env, ctx);
     }
 

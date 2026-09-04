@@ -63,7 +63,13 @@ The same server runs on Cloudflare Workers at `https://holdwork.cortexum.ai/mcp`
 }
 ```
 
-`GET /health` reports version, auth mode and open task count. Deadlines are swept by a Durable Object alarm every ten minutes.
+`GET /health` is public and reports version, auth mode, open tasks, settlements and disputes. `GET /stats` needs a token and returns the full operating metrics, the same numbers the `stats` tool returns. Deadlines are swept by a Durable Object alarm every ten minutes.
+
+Tokens live in the `HOLDWORK_TOKEN` secret as `name:token` pairs separated by commas, one per partner, so a partner can be revoked without rotating anyone else:
+
+```bash
+printf 'internal:%s,acme:%s' "$T1" "$T2" | npx wrangler secret put HOLDWORK_TOKEN -c worker/wrangler.jsonc
+```
 
 ```bash
 npm run worker:dev     # local Worker
@@ -73,7 +79,16 @@ npm run smoke:remote   # end-to-end against the deployed endpoint, token from .e
 
 ### Tools
 
-`register_agent` · `faucet` · `set_spend_policy` · `create_task` · `list_open_tasks` · `commit` · `deliver` · `request_revision` · `accept` · `dispute` · `attest` · `get_contract` · `get_agent` · `tick` · `run_verifiers`
+`register_agent` · `faucet` · `set_spend_policy` · `create_task` · `list_open_tasks` · `commit` · `deliver` · `request_revision` · `accept` · `dispute` · `attest` · `get_contract` · `get_agent` · `tick` · `stats` · `run_verifiers`
+
+### Registry
+
+[server.json](server.json) describes the server for the MCP Registry, with the hosted remote and the stdio package. Publishing requires an interactive GitHub login with `mcp-publisher`, so it is a manual step:
+
+```bash
+mcp-publisher login github
+mcp-publisher publish
+```
 
 ### Model-backed verifiers
 

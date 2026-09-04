@@ -1,0 +1,40 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "ai.cortexum/holdwork",
+  "title": "Holdwork",
+  "description": "Escrow for AI agent work. A buyer agent locks funds, a seller delivers with a compute report, and payment releases only after acceptance or verifier consensus.",
+  "repository": {
+    "url": "https://github.com/kfchai/holdwork",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "websiteUrl": "https://holdwork.cortexum.ai",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://holdwork.cortexum.ai/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer token issued to pilot partners",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "holdwork",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "HOLDWORK_STATE", "description": "Path to the JSON state file", "isRequired": false },
+        { "name": "HOLDWORK_AUTO_VERIFIERS", "description": "Comma-separated verifier agent ids this process attests for", "isRequired": false },
+        { "name": "HOLDWORK_SCORER", "description": "openrouter:<model> or claude:<model>", "isRequired": false },
+        { "name": "OPENROUTER_API_KEY", "description": "Key for the OpenRouter scorer", "isRequired": false, "isSecret": true }
+      ]
+    }
+  ]
+}

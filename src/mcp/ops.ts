@@ -29,6 +29,73 @@ export interface HoldworkOps {
   getAgent(a: { agentId: string }): Promise<OpResult>;
   tick(): Promise<OpResult>;
   runVerifiers(): Promise<OpResult>;
+  stats(): Promise<OpResult<Stats>>;
+}
+
+/** Operating metrics. These are the numbers the board report is built from. */
+export interface Stats {
+  agents: number;
+  operators: number;
+  verifiers: number;
+  contractsByState: Record<string, number>;
+  settled: number;
+  settledVolume: string;
+  feesEarned: string;
+  disputes: number;
+  disputesBuyerVindicated: number;
+  calibrationSamples: number;
+  attestations: number;
+  zeroConfidenceAttestations: number;
+  avgSettledQuality: number | null;
+  medianDisputeSettleSeconds: number | null;
+  ledgerTotal: string;
+}
+
+export function computeStats(engine: HoldworkEngine): Stats {
+  const contracts = [...engine.contracts.values()];
+  const byState: Record<string, number> = {};
+  let settled = 0, volume = 0n, fees = 0n, disputes = 0, vindicated = 0, samples = 0, atts = 0, zeroConf = 0, qualitySum = 0;
+  const disputeSeconds: number[] = [];
+  for (const c of contracts) {
+    byState[c.state] = (byState[c.state] ?? 0) + 1;
+    if (c.settlement) {
+      settled++;
+      volume += c.settlement.toSeller;
+      fees += c.settlement.fee;
+      qualitySum += c.settlement.quality;
+    }
+    if (c.calibrationSample?.sampled) samples++;
+    const disputedAt = c.events.find((e) => e.type === 'DISPUTED')?.at;
+    if (disputedAt !== undefined) {
+      disputes++;
+      if (c.settlement?.verifierFeesPaidBy === 'SELLER_STAKE') vindicated++;
+      if (c.settlement) disputeSeconds.push((c.settlement.settledAt - disputedAt) / 1000);
+    }
+    for (const r of c.verification) {
+      atts += r.attestations.length;
+      zeroConf += r.attestations.filter((a) => a.confidence === 0).length;
+    }
+  }
+  // feesEarned counts settlement fees only; the fee account balance may also hold forfeited bonds.
+  disputeSeconds.sort((a, b) => a - b);
+  const agents = [...engine.agents.values()];
+  return {
+    agents: agents.length,
+    operators: engine.operators.size,
+    verifiers: agents.filter((a) => a.isVerifier).length,
+    contractsByState: byState,
+    settled,
+    settledVolume: fmt(volume),
+    feesEarned: fmt(fees),
+    disputes,
+    disputesBuyerVindicated: vindicated,
+    calibrationSamples: samples,
+    attestations: atts,
+    zeroConfidenceAttestations: zeroConf,
+    avgSettledQuality: settled ? +(qualitySum / settled).toFixed(3) : null,
+    medianDisputeSettleSeconds: disputeSeconds.length ? Math.round(disputeSeconds[Math.floor(disputeSeconds.length / 2)]) : null,
+    ledgerTotal: fmt(engine.ledger.total()),
+  };
 }
 
 // ───────────── presentation ─────────────
@@ -184,6 +251,9 @@ export class LocalOps implements HoldworkOps {
   }
   tick() {
     return this.run(() => this.engine.tick().map(contractView));
+  }
+  async stats(): Promise<OpResult<Stats>> {
+    return { ok: true, result: computeStats(this.engine) };
   }
   async runVerifiers(): Promise<OpResult> {
     const av = this.hooks.autoVerifier;

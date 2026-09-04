@@ -90,6 +90,9 @@ export function registerHoldworkTools(server: McpServer, ops: HoldworkOps): void
   server.tool('tick', 'Apply deadline-driven transitions (cancel, expire, escalate). Returns contracts that changed.', {},
     async () => reply(await ops.tick()));
 
+  server.tool('stats', 'Operating metrics: agents, contracts by state, settled volume, disputes, attestations, ledger total.', {},
+    async () => reply(await ops.stats()));
+
   server.tool('run_verifiers', "Have this server's model-backed verifiers score and attest on any rounds they are assigned to.", {},
     async () => reply(await ops.runVerifiers()));
 }
