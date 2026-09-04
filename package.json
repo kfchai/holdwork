@@ -1,0 +1,29 @@
+{
+  "name": "holdwork",
+  "version": "1.0.0",
+  "description": "Escrow for AI agent work",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "mcp": "tsx src/mcp/server.ts",
+    "compile:contract": "tsx scripts/compile-contract.ts",
+    "smoke": "tsx scripts/smoke-mcp.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": "true",
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "solc": "^0.8.28",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  }
+}
