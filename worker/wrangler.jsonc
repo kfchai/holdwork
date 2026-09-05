@@ -6,6 +6,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "routes": [{ "pattern": "holdwork.cortexum.ai", "custom_domain": true }],
+  // Static site (landing page + docs) built by `npm run build:site`. Matching paths are served as
+  // assets; everything else (/mcp, /health, /stats) falls through to the Worker.
+  "assets": { "directory": "../site", "html_handling": "auto-trailing-slash", "not_found_handling": "none" },
   // Secrets, set with `wrangler secret put <NAME> -c worker/wrangler.jsonc`:
   //   HOLDWORK_NETWORK_KEY   HMAC key for sampling and verifier selection (required in production)
   //   HOLDWORK_TOKEN         shared bearer token for /mcp (pilot auth)

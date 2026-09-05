@@ -22,7 +22,8 @@
     "moltbook:watch": "tsx scripts/moltbook-watch.ts",
     "verifier:bot": "tsx scripts/verifier-bot.ts",
     "testnet:pilot": "tsx scripts/testnet-pilot.ts",
-    "worker:deploy:testnet": "cd worker && wrangler deploy -c wrangler.testnet.jsonc"
+    "worker:deploy:testnet": "cd worker && wrangler deploy -c wrangler.testnet.jsonc",
+    "build:site": "tsx scripts/build-site.ts"
   },
   "keywords": [],
   "author": "",
