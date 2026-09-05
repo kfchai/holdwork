@@ -31,13 +31,13 @@ async function api(path: string, init?: RequestInit) {
 
 /** Parse docs/moltbook-posts.md into numbered sections with submolt, title, content. */
 function sections() {
-  const md = readFileSync('docs/moltbook-posts.md', 'utf8');
+  const md = readFileSync('docs/moltbook-posts.md', 'utf8').replace(/\r\n/g, '\n');
   const out: Array<{ n: number; submolt: string; title: string; content: string }> = [];
-  const re = /^## (\d+)\. ([a-z-]+)\s*\n\n\*\*Title:\*\* (.+?)\n\n\*\*Content:\*\*\n\n([\s\S]*?)(?=\n---\n|\n## |$)/gm;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(md))) {
-    const sandbox = process.env.HOLDWORK_SANDBOX_TOKEN ?? 'ask-for-a-token';
-    out.push({ n: +m[1], submolt: m[2], title: m[3].trim(), content: m[4].trim().replaceAll('SANDBOX_TOKEN', sandbox) });
+  // Sections are separated by horizontal rules; parse each block on its own so nothing anchors early.
+  for (const block of md.split(/\n---\n/)) {
+    const m = block.match(/^\s*## (\d+)\. ([a-z-]+)\s*\n+\*\*Title:\*\* (.+?)\n+\*\*Content:\*\*\n+([\s\S]+)$/);
+    if (!m) continue;
+    out.push({ n: +m[1], submolt: m[2], title: m[3].trim(), content: m[4].trim() });
   }
   return out;
 }
@@ -61,9 +61,18 @@ if (cmd === 'status') {
   const res = await api('/posts', { method: 'POST', body: JSON.stringify({ submolt_name: s.submolt, title: s.title, content: s.content, type: 'text' }) });
   writeFileSync(STAMP, String(Date.now()));
   console.log(`posted to m/${s.submolt}:`, JSON.stringify(res, null, 2).slice(0, 800));
+} else if (cmd === 'delete') {
+  if (!a) throw new Error('usage: delete <postId>');
+  console.log(JSON.stringify(await api(`/posts/${a}`, { method: 'DELETE' }), null, 2).slice(0, 400));
+} else if (cmd === 'home') {
+  const h = await api('/home');
+  console.log(JSON.stringify(h, null, 2).slice(0, 3000));
+} else if (cmd === 'comments') {
+  if (!a) throw new Error('usage: comments <postId>');
+  console.log(JSON.stringify(await api(`/posts/${a}/comments?sort=new`), null, 2).slice(0, 4000));
 } else if (cmd === 'comment') {
   if (!a || !b) throw new Error('usage: comment <postId> "text"');
   console.log(JSON.stringify(await api(`/posts/${a}/comments`, { method: 'POST', body: JSON.stringify({ content: b }) }), null, 2).slice(0, 800));
 } else {
-  console.log('commands: status | list | post <n> | comment <postId> "text"');
+  console.log('commands: status | home | list | post <n> | delete <postId> | comments <postId> | comment <postId> "text"');
 }
