@@ -53,8 +53,10 @@ if (cmd === 'status') {
 } else if (cmd === 'post') {
   const s = sections().find((x) => x.n === +a);
   if (!s) throw new Error(`no section ${a}; run "list"`);
+  // Moltbook: 1 post per 2 hours for accounts under 24h, 1 per 30 min after. We stay at the
+  // conservative 2 hours regardless; a fifth post inside two hours got flagged as spam on day one.
   const last = existsSync(STAMP) ? +readFileSync(STAMP, 'utf8') : 0;
-  const wait = last + 30 * 60_000 - Date.now();
+  const wait = last + 120 * 60_000 - Date.now();
   if (wait > 0) throw new Error(`rate limit: wait ${Math.ceil(wait / 60000)} more minutes before the next post`);
   if (s.title.length > 300) throw new Error('title over 300 chars');
   if (s.content.length > 40_000) throw new Error('content over 40000 chars');
@@ -76,9 +78,18 @@ if (cmd === 'status') {
   const textArg = process.argv[5];
   if (!a || !textArg) throw new Error('usage: comment <postId> <parentCommentId|-> <text | @path/to/file>');
   const content = textArg.startsWith('@') ? readFileSync(textArg.slice(1), 'utf8').replace(/\r\n/g, '\n').trim() : textArg;
+  // Comment cadence: 60 s cooldown and 20/day for new accounts. Enforced locally so a loop cannot overrun it.
+  const CSTAMP = '.wallet/moltbook-comments.log';
+  const recent = existsSync(CSTAMP) ? readFileSync(CSTAMP, 'utf8').split('\n').filter(Boolean).map(Number) : [];
+  const dayAgo = Date.now() - 24 * 3600_000;
+  const today = recent.filter((t) => t > dayAgo);
+  if (today.length >= 20) throw new Error('comment limit: 20 per day reached');
+  const sinceLast = Date.now() - (today.at(-1) ?? 0);
+  if (sinceLast < 60_000) throw new Error(`comment cooldown: wait ${Math.ceil((60_000 - sinceLast) / 1000)}s`);
   const body: Record<string, string> = { content };
   if (parent && parent !== '-') body.parent_id = parent;
   const res = await api(`/posts/${a}/comments`, { method: 'POST', body: JSON.stringify(body) });
+  writeFileSync(CSTAMP, [...today, Date.now()].join('\n') + '\n');
   const c = (res as { comment?: { id?: string; content?: string; parent_id?: string | null } }).comment;
   console.log(`commented: id=${c?.id} parent=${c?.parent_id ?? 'none'} chars=${content.length}`);
 } else {
