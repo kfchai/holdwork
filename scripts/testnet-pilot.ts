@@ -77,12 +77,36 @@ async function call(name: string, args: Record<string, unknown>, tolerate?: stri
   return JSON.parse(text);
 }
 type Tx = { to: Address; data: Hex; description: string };
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/**
+ * Sign and send each prepared transaction in order. The public RPC sits behind a load balancer, so a
+ * node may estimate gas against a block that predates the previous receipt; on that specific revert
+ * we wait and retry rather than fail. After an approve we also wait until the allowance is visible.
+ */
 async function sign(a: typeof arbiter, txs: Tx[]) {
   for (const t of txs) {
-    const h = await wallet(a).sendTransaction({ to: t.to, data: t.data });
-    const r = await pub.waitForTransactionReceipt({ hash: h });
+    let h: Hex | undefined;
+    for (let attempt = 1; attempt <= 6 && !h; attempt++) {
+      try {
+        h = await wallet(a).sendTransaction({ to: t.to, data: t.data });
+      } catch (e) {
+        const msg = String(e);
+        if (attempt < 6 && /allowance|insufficient|nonce|replacement/i.test(msg)) { await sleep(4000); continue; }
+        throw e;
+      }
+    }
+    const r = await pub.waitForTransactionReceipt({ hash: h! });
     console.log(`  ${r.status} ${t.description.slice(0, 70)} → ${h}`);
     if (r.status !== 'success') throw new Error(`tx reverted: ${h}`);
+    if (t.to.toLowerCase() === dep.usdc.toLowerCase()) {
+      // approve: wait until the RPC reports the allowance before the dependent call
+      for (let i = 0; i < 10; i++) {
+        const al = await pub.readContract({ address: dep.usdc, abi: ERC20_ABI, functionName: 'allowance', args: [a.address, dep.address] });
+        if (al > 0n) break;
+        await sleep(2000);
+      }
+      await sleep(2000);
+    }
   }
 }
 async function waitState(id: string, want: string[], maxSec = 240) {
