@@ -224,6 +224,28 @@ describe('timeouts', () => {
   });
 });
 
+describe('verifier assignments', () => {
+  it('lists open rounds for an assigned verifier without the buyer claim, and clears after attesting', () => {
+    const { eng } = setup();
+    const c = eng.createTask({ buyerId: 'buyer', title: 't', description: 'd', category: 'research', price: usdc(20) });
+    eng.commit(c.id, 'seller');
+    eng.deliver(c.id, 'seller', { text: 'x' }, compute);
+    eng.dispute(c.id, 'buyer', 0.33, 'weak');
+    const assigned = eng.contract(c.id).verification[0].verifierIds;
+    const [v] = assigned;
+    const unassigned = ['v1', 'v2', 'v3', 'v4', 'v5'].find((id) => !assigned.includes(id))!;
+    const mine = eng.pendingAssignments(v);
+    expect(mine).toHaveLength(1);
+    expect(mine[0].contractId).toBe(c.id);
+    expect(mine[0].output).toEqual({ text: 'x' });
+    expect(JSON.stringify(mine[0])).not.toContain('0.33');
+    expect(eng.pendingAssignments(unassigned)).toHaveLength(0);
+    eng.attest(c.id, v, 0.5, 0.8);
+    expect(eng.pendingAssignments(v)).toHaveLength(0);
+    expect(() => eng.pendingAssignments('nobody')).toThrowError(/not registered/);
+  });
+});
+
 describe('sampling and calibration', () => {
   it('sampling is deterministic and close to the configured rate', () => {
     const { eng } = setup();

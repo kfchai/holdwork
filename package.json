@@ -19,7 +19,8 @@
     "moltbook": "tsx scripts/moltbook-post.ts",
     "test:contract": "hardhat test",
     "deploy:escrow": "tsx scripts/deploy-escrow.ts",
-    "moltbook:watch": "tsx scripts/moltbook-watch.ts"
+    "moltbook:watch": "tsx scripts/moltbook-watch.ts",
+    "verifier:bot": "tsx scripts/verifier-bot.ts"
   },
   "keywords": [],
   "author": "",

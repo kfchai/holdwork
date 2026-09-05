@@ -98,6 +98,7 @@ export class HoldworkLedger extends DurableObject<Env> {
   }
 
   async stats() { return (await this.getOps()).stats(); }
+  async myAssignments(a: { verifierId: string }) { return (await this.getOps()).myAssignments(a); }
 }
 
 // ───────────────────────── the MCP front door ─────────────────────────
@@ -124,6 +125,7 @@ function ledgerOps(env: Env): HoldworkOps {
     tick: () => call(stub.tick()),
     runVerifiers: () => call(stub.runVerifiers()),
     stats: () => call(stub.stats()) as Promise<OpResult<Stats>>,
+    myAssignments: (a) => call(stub.myAssignments(a)),
   };
 }
 

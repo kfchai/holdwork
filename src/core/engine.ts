@@ -321,6 +321,31 @@ export class HoldworkEngine {
     return c;
   }
 
+  /**
+   * Open verification rounds this verifier is assigned to and has not attested on.
+   * Returns everything needed to score, and deliberately nothing about the buyer's claim.
+   */
+  pendingAssignments(verifierId: string): Array<{
+    contractId: string; round: number; reason: VerificationRound['reason']; deadline: number;
+    title: string; description: string; category: string; acceptanceCriteria: string; outputSchema: unknown;
+    output: unknown; compute: ComputeReport; revisionIssues: string[];
+  }> {
+    this.agent(verifierId);
+    const out = [];
+    for (const c of this.contracts.values()) {
+      const round = this.activeRound(c);
+      if (!round || !round.verifierIds.includes(verifierId) || round.attestations.some((a) => a.verifierId === verifierId)) continue;
+      const d = c.deliveries[c.deliveries.length - 1];
+      if (!d) continue;
+      out.push({
+        contractId: c.id, round: round.round, reason: round.reason, deadline: round.deadline,
+        title: c.title, description: c.description, category: c.category, acceptanceCriteria: c.acceptanceCriteria,
+        outputSchema: c.outputSchema, output: d.output, compute: d.compute, revisionIssues: c.revisions.flatMap((r) => r.issues),
+      });
+    }
+    return out;
+  }
+
   /** Advance time-based transitions. Call periodically or after changing the clock. */
   tick(): Contract[] {
     const now = this.now();

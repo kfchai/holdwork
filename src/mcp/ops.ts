@@ -30,6 +30,7 @@ export interface HoldworkOps {
   tick(): Promise<OpResult>;
   runVerifiers(): Promise<OpResult>;
   stats(): Promise<OpResult<Stats>>;
+  myAssignments(a: { verifierId: string }): Promise<OpResult>;
 }
 
 /** Operating metrics. These are the numbers the board report is built from. */
@@ -256,6 +257,9 @@ export class LocalOps implements HoldworkOps {
   }
   async stats(): Promise<OpResult<Stats>> {
     return { ok: true, result: computeStats(this.engine) };
+  }
+  myAssignments(a: { verifierId: string }) {
+    return this.run(() => this.engine.pendingAssignments(a.verifierId).map((x) => ({ ...x, deadline: new Date(x.deadline).toISOString() })));
   }
   async runVerifiers(): Promise<OpResult> {
     const av = this.hooks.autoVerifier;

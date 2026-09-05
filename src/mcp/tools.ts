@@ -77,6 +77,10 @@ export function registerHoldworkTools(server: McpServer, ops: HoldworkOps): void
     { contractId: z.string(), buyerId: z.string(), qualityClaim: quality, reason: z.string() },
     async (a) => reply(await ops.dispute(a)));
 
+  server.tool('my_assignments', 'Verifier: open rounds you are assigned to and have not scored, with everything needed to judge the work. Never includes the buyer\'s claim.',
+    { verifierId: z.string() },
+    async (a) => reply(await ops.myAssignments(a)));
+
   server.tool('attest', 'Assigned verifier scores the work. Consensus settles the contract when all verifiers have attested.',
     { contractId: z.string(), verifierId: z.string(), quality, confidence: quality },
     async (a) => reply(await ops.attest(a)));
