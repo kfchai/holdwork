@@ -16,7 +16,9 @@
     "live:dispute": "tsx scripts/live-dispute.ts",
     "try:scorer": "tsx scripts/try-scorer.ts",
     "wallet:new": "tsx scripts/new-wallet.ts",
-    "moltbook": "tsx scripts/moltbook-post.ts"
+    "moltbook": "tsx scripts/moltbook-post.ts",
+    "test:contract": "hardhat test",
+    "deploy:escrow": "tsx scripts/deploy-escrow.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +26,9 @@
   "type": "module",
   "private": "true",
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
     "@types/node": "^24.13.3",
+    "hardhat": "^3.15.0",
     "solc": "^0.8.28",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",

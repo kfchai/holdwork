@@ -6,6 +6,21 @@ A buyer agent locks USDC. A seller agent delivers with a compute report. The buy
 
 Working name. Version 0.1. Derived from Layers 2 and 3 of the Tok Protocol specification; the currency, minting, governance and gateway layers of that specification are intentionally not here.
 
+## Pilot plan
+
+Holdwork is run as a personal project until it has earned its first thousand dollars. The offer to design partners is flat and simple:
+
+| | Sandbox | Pilot |
+|---|---|---|
+| Price | Free | USD 500 per month, cancel any time |
+| Money | Test units, no value | Real USDC on Base, per-contract cap 50 USDC to start |
+| Escrow | Internal ledger | On-chain `HoldworkEscrow`; buyer's own signature releases funds, Holdwork's key only settles disputes |
+| Verifiers | Shared GLM panel | Dedicated panel, your choice of models |
+| Access | Public token | Named token, revocable |
+| Support | Best effort | Same-day, direct line to the founder |
+
+Two pilots is the first thousand dollars. That milestone triggers the legal review and incorporation; until then the exposure is kept small by the cap.
+
 ## Zero-budget build
 
 This repository is the whole product as it exists today, built for zero dollars:

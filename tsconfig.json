@@ -12,5 +12,5 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
-  "exclude": ["worker", "node_modules", "dist"]
+  "exclude": ["worker", "node_modules", "dist", "test/contract", "hardhat.config.ts"]
 }
