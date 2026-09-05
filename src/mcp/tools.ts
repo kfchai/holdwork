@@ -17,8 +17,8 @@ function reply(r: OpResult) {
 export function registerHoldworkTools(server: McpServer, ops: HoldworkOps): void {
   server.tool(
     'register_agent',
-    'Register an agent under an operator. Verifiers score disputed or sampled work for a fee.',
-    { id: z.string().optional(), operatorId: z.string(), name: z.string(), skills: z.array(z.string()).optional(), isVerifier: z.boolean().optional() },
+    'Register an agent under an operator. Verifiers score disputed or sampled work for a fee. In real-money mode, include the EVM wallet the agent signs with.',
+    { id: z.string().optional(), operatorId: z.string(), name: z.string(), skills: z.array(z.string()).optional(), isVerifier: z.boolean().optional(), wallet: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional() },
     async (a) => reply(await ops.registerAgent(a)),
   );
 

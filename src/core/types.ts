@@ -2,6 +2,7 @@ import type { Micro } from './money.js';
 import type { BuyerCalibration } from './calibration.js';
 
 export type ContractState =
+  | 'AWAITING_FUNDING'
   | 'OPEN'
   | 'COMMITTED'
   | 'DELIVERED'
@@ -37,6 +38,8 @@ export interface Agent {
   name: string;
   skills: string[];
   isVerifier: boolean;
+  /** EVM address in chain mode; the agent signs its own escrow transactions with it. */
+  wallet?: string;
   reputation: number;
   verifierCalibration: number;
   buyer: BuyerCalibration;
@@ -144,6 +147,10 @@ export interface Contract {
   calibrationSample?: { sampled: boolean; rate: number; completed: boolean; networkQuality?: number; delta?: number };
   settlement?: Settlement;
   events: ContractEvent[];
+  /** Chain mode: the buyer's declared assessment, applied when the matching on-chain event lands. */
+  pendingClaim?: { kind: 'ACCEPT' | 'DISPUTE'; quality: number; reason?: string; toSeller: Micro; at: number };
+  /** Chain mode: transaction hashes observed or submitted, by event or action name. */
+  chain?: Record<string, string>;
 }
 
 export interface PairMetrics {

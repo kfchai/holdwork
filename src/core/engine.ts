@@ -77,7 +77,11 @@ export class HoldworkEngine {
     name: string;
     skills?: string[];
     isVerifier?: boolean;
+    wallet?: string;
   }): Agent {
+    if (input.wallet !== undefined && !/^0x[0-9a-fA-F]{40}$/.test(input.wallet)) {
+      throw new HoldworkError('INVALID_WALLET', 'wallet must be a 0x-prefixed 20-byte EVM address');
+    }
     const id = input.id ?? `agent_${randomUUID().slice(0, 8)}`;
     if (this.agents.has(id)) throw new HoldworkError('AGENT_EXISTS', `Agent ${id} already registered`);
     if (!this.operators.has(input.operatorId)) this.operators.set(input.operatorId, { id: input.operatorId, policy: {} });
@@ -87,6 +91,7 @@ export class HoldworkEngine {
       name: input.name,
       skills: input.skills ?? [],
       isVerifier: input.isVerifier ?? false,
+      wallet: input.wallet?.toLowerCase(),
       reputation: this.params.initialReputation,
       verifierCalibration: this.params.initialCalibration,
       buyer: { calibration: this.params.initialCalibration, bias: 0, sampledCount: 0 },
@@ -128,7 +133,18 @@ export class HoldworkEngine {
 
   // ───────────────────────── buyer: create ─────────────────────────
 
-  createTask(input: CreateTaskInput): Contract {
+  /** Chain mode helper: find the agent that owns an EVM address. */
+  agentByWallet(wallet: string): Agent | undefined {
+    const w = wallet.toLowerCase();
+    for (const a of this.agents.values()) if (a.wallet === w) return a;
+    return undefined;
+  }
+
+  /**
+   * Create a task. With `deferFunding`, nothing is locked and the contract waits in
+   * AWAITING_FUNDING until `confirmFunding` is called (chain mode: when the Opened event lands).
+   */
+  createTask(input: CreateTaskInput, opts: { deferFunding?: boolean } = {}): Contract {
     const buyer = this.agent(input.buyerId);
     if (input.price <= 0n) throw new HoldworkError('INVALID_PRICE', 'Price must be positive');
     const fullPay = input.fullPayQuality ?? this.params.defaultFullPayQuality;
@@ -154,7 +170,7 @@ export class HoldworkEngine {
     };
     const contract: Contract = {
       id,
-      state: 'OPEN',
+      state: opts.deferFunding ? 'AWAITING_FUNDING' : 'OPEN',
       buyerId: buyer.id,
       buyerOperatorId: buyer.operatorId,
       title: terms.title,
@@ -176,10 +192,44 @@ export class HoldworkEngine {
       verification: [],
       events: [],
     };
-    this.ledger.transfer(buyer.id, escrowAccount(id), input.price, now, 'lock budget');
+    if (!opts.deferFunding) this.ledger.transfer(buyer.id, escrowAccount(id), input.price, now, 'lock budget');
     this.contracts.set(id, contract);
-    this.log(contract, 'CREATED', buyer.id, { price: input.price.toString(), criteriaHash: contract.criteriaHash });
+    this.log(contract, opts.deferFunding ? 'CREATED_AWAITING_FUNDING' : 'CREATED', buyer.id, { price: input.price.toString(), criteriaHash: contract.criteriaHash });
     return contract;
+  }
+
+  /**
+   * Chain mode: the buyer's deposit landed on-chain. Mirror it into the ledger and open the offer.
+   * `amount` must equal the price; anything else is refused so the mirror never drifts from the chain.
+   */
+  confirmFunding(contractId: string, amount: Micro, txHash?: string): Contract {
+    const c = this.contract(contractId);
+    this.expect(c, 'AWAITING_FUNDING');
+    if (amount !== c.price) throw new HoldworkError('FUNDING_MISMATCH', `Deposited ${amount}, contract price is ${c.price}`);
+    const now = this.now();
+    if (now > c.offerDeadline) throw new HoldworkError('OFFER_EXPIRED', 'Funding arrived after the offer deadline');
+    this.ledger.deposit(c.buyerId, amount, now, `chain deposit ${txHash ?? ''}`);
+    this.ledger.transfer(c.buyerId, escrowAccount(c.id), amount, now, 'lock budget');
+    c.state = 'OPEN';
+    if (txHash) (c.chain ??= {}).opened = txHash;
+    this.log(c, 'FUNDED', c.buyerId, { amount: amount.toString(), txHash });
+    return c;
+  }
+
+  /**
+   * Chain mode: record what the buyer intends to sign. Applied by `accept` / `dispute` when the
+   * matching event lands. Returns the on-chain `toSeller` for an acceptance so the buyer can sign it.
+   */
+  setPendingClaim(contractId: string, buyerId: string, kind: 'ACCEPT' | 'DISPUTE', quality: number, reason?: string): Contract {
+    const c = this.contract(contractId);
+    this.expectBuyer(c, buyerId);
+    this.expect(c, 'DELIVERED');
+    this.validateQuality(quality);
+    if (kind === 'DISPUTE' && !reason) throw new HoldworkError('NO_REASON', 'A dispute needs a reason');
+    const toSeller = kind === 'ACCEPT' ? computePayout(c.price, quality, c.fullPayQuality, c.zeroPayQuality, this.params).toSeller : 0n;
+    c.pendingClaim = { kind, quality, reason, toSeller, at: this.now() };
+    this.log(c, 'CLAIM_PREPARED', buyerId, { kind, quality, toSeller: toSeller.toString() });
+    return c;
   }
 
   listOpenTasks(category?: string): Contract[] {
@@ -353,6 +403,9 @@ export class HoldworkEngine {
     for (const c of this.contracts.values()) {
       const before = c.state + ':' + c.verification.length + ':' + (c.calibrationSample?.completed ?? '');
       switch (c.state) {
+        case 'AWAITING_FUNDING':
+          if (now > c.offerDeadline) this.cancel(c, 'FUNDING_TIMEOUT'); // nothing was locked; cancel() moves zero
+          break;
         case 'OPEN':
           if (now > c.offerDeadline) this.cancel(c, 'OFFER_TIMEOUT');
           break;

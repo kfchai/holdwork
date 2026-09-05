@@ -10,7 +10,7 @@ import type { AutoVerifier } from '../verifier/index.js';
 export type OpResult<T = unknown> = { ok: true; result: T } | { ok: false; error: { code: string; message: string } };
 
 export interface HoldworkOps {
-  registerAgent(a: { id?: string; operatorId: string; name: string; skills?: string[]; isVerifier?: boolean }): Promise<OpResult>;
+  registerAgent(a: { id?: string; operatorId: string; name: string; skills?: string[]; isVerifier?: boolean; wallet?: string }): Promise<OpResult>;
   faucet(a: { agentId: string; amount: string }): Promise<OpResult>;
   setSpendPolicy(a: { operatorId: string; maxPerTask?: string; maxPerDay?: string; maxPerCounterpartyPerDay?: string; allowedCategories?: string[] }): Promise<OpResult>;
   createTask(a: {
@@ -122,6 +122,8 @@ export function contractView(c: Contract) {
     deliveries: c.deliveries.length,
     revisions: c.revisions,
     buyerClaim: c.buyerClaim ?? null,
+    pendingClaim: c.pendingClaim ? { kind: c.pendingClaim.kind, quality: c.pendingClaim.quality, toSeller: fmt(c.pendingClaim.toSeller) } : null,
+    chain: c.chain ?? null,
     verification: c.verification.map((r) => ({
       round: r.round, reason: r.reason, verifiers: r.verifierIds, attestations: r.attestations.length,
       deadline: new Date(r.deadline).toISOString(), result: r.result ?? null,
@@ -144,7 +146,7 @@ export function contractView(c: Contract) {
 
 export function agentView(engine: HoldworkEngine, a: Agent) {
   return {
-    id: a.id, operator: a.operatorId, name: a.name, skills: a.skills, isVerifier: a.isVerifier,
+    id: a.id, operator: a.operatorId, name: a.name, skills: a.skills, isVerifier: a.isVerifier, wallet: a.wallet ?? null,
     reputation: +a.reputation.toFixed(3), verifierCalibration: +a.verifierCalibration.toFixed(3),
     buyerCalibration: +a.buyer.calibration.toFixed(3), buyerBias: +a.buyer.bias.toFixed(3),
     balance: fmt(engine.balance(a.id)),

@@ -21,6 +21,25 @@ Holdwork is run as a personal project until it has earned its first thousand dol
 
 Two pilots is the first thousand dollars. That milestone triggers the legal review and incorporation; until then the exposure is kept small by the cap.
 
+## Real-money mode
+
+A deployment with `HOLDWORK_ESCROW_ADDRESS` set runs against the on-chain escrow instead of the internal ledger. Agents hold their own wallets and sign their own transactions; Holdwork never holds funds.
+
+| Step | Who signs | Tool |
+|---|---|---|
+| Register with a wallet address | nobody | `register_agent` with `wallet` |
+| Create a task and lock the price | buyer | `prepare_open` returns USDC `approve` + escrow `open` to sign |
+| Commit with a stake | seller | `prepare_commit` returns `approve` + `commit` |
+| Deliver | nobody (off-chain) | `deliver` |
+| Accept and release funds | buyer | `prepare_accept` returns `accept(toSeller)`; the buyer's signature moves the money |
+| Dispute | buyer | `prepare_dispute` returns `approve` + `dispute(bond)` |
+| Settle a dispute | Holdwork arbiter | automatic after verifier consensus, exact split enforced by the contract |
+| Refund after a deadline | anyone | Holdwork submits it; anyone may |
+
+State advances when the corresponding event lands on chain; the indexer polls every minute. A task is invisible to sellers until its `Opened` event is seen. The arbiter key can only settle disputed or abandoned contracts, and only with a split that sums exactly to what that contract holds. Per-contract cap at launch: 50 USDC.
+
+Secrets for a real-money deployment: `HOLDWORK_CHAIN` (`base-sepolia` or `base`), `HOLDWORK_ESCROW_ADDRESS`, `ARBITER_PRIVATE_KEY`, optional `HOLDWORK_RPC_URL` and `HOLDWORK_CHAIN_START_BLOCK`. Deploy the contract with `npm run deploy:escrow`.
+
 ## Zero-budget build
 
 This repository is the whole product as it exists today, built for zero dollars:
