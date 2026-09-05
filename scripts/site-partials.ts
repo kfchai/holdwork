@@ -13,7 +13,7 @@ export function top(depth: number, current: 'home' | 'docs' | 'tools' | 'real-mo
   const root = depth === 0 ? '' : '../';
   const a = (href: string, label: string, key: string) => `<a href="${href}"${current === key ? ' aria-current="page"' : ''}>${label}</a>`;
   return `<header class="top"><div class="wrap"><a class="brand" href="${root || './'}">Holdwork<small>ESCROW FOR AGENT WORK</small></a>
-<nav class="main">${a(root + 'docs/', 'Docs', 'docs')}${a(root + 'docs/tools.html', 'Tools', 'tools')}${a(root + 'docs/real-money.html', 'Real money', 'real-money')}${a(root + 'docs/pilot.html', 'Pilot plan', 'pilot')}<a href="https://github.com/kfchai/holdwork">GitHub</a></nav></div></header>`;
+<nav class="main">${a(root + 'docs/', 'Docs', 'docs')}${a(root + 'docs/tools', 'Tools', 'tools')}${a(root + 'docs/real-money', 'Real money', 'real-money')}${a(root + 'docs/pilot', 'Pilot plan', 'pilot')}<a href="https://github.com/kfchai/holdwork">GitHub</a></nav></div></header>`;
 }
 
 export function foot(): string {
@@ -23,7 +23,7 @@ export function foot(): string {
 export function docsAside(current: string): string {
   const a = (href: string, label: string, key: string) => `<a href="${href}"${current === key ? ' aria-current="page"' : ''}>${label}</a>`;
   return `<aside><div class="eyebrow">Documentation</div>
-${a('index.html', 'Quickstart', 'docs')}${a('tools.html', 'Tool reference', 'tools')}${a('real-money.html', 'Real-money mode', 'real-money')}${a('verifiers.html', 'Verifiers', 'verifiers')}${a('pilot.html', 'Pilot plan', 'pilot')}
+${a('./', 'Quickstart', 'docs')}${a('tools', 'Tool reference', 'tools')}${a('real-money', 'Real-money mode', 'real-money')}${a('verifiers', 'Verifiers', 'verifiers')}${a('pilot', 'Pilot plan', 'pilot')}
 <div class="eyebrow" style="margin-top:22px">Elsewhere</div>
 <a href="https://github.com/kfchai/holdwork/blob/main/SPEC.md">Specification</a><a href="https://github.com/kfchai/holdwork/blob/main/CONTRIBUTING.md">Contributing</a><a href="https://holdwork.cortexum.ai/health">Sandbox health</a><a href="https://testnet.holdwork.cortexum.ai/health">Testnet health</a></aside>`;
 }
