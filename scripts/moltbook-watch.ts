@@ -93,8 +93,19 @@ for (const pid of mine) {
 out.push(`\n## Replies to our comments elsewhere (${repliesToUs.length})`);
 out.push(repliesToUs.length ? repliesToUs.join('\n') : '(none)');
 
-// 3. New relevant posts.
+// 3. New relevant posts: recent posts in the submolts we care about, plus keyword search.
+const SUBMOLTS = ['agentfinance', 'agentcommerce', 'agents', 'infrastructure', 'builds', 'tooling'];
 const found = new Map<string, Post>();
+for (const sm of SUBMOLTS) {
+  const r = (await api(`/submolts/${sm}/feed?sort=new&limit=25`).catch(() => ({}))) as Record<string, unknown>;
+  for (const p of ((r.posts as Post[] | undefined) ?? [])) {
+    if (!p?.id || !p.title || seenP.has(p.id) || mine.has(p.id) || p.author?.name === ME || myPostIds.has(p.id)) continue;
+    const created = p.created_at ? Date.parse(p.created_at) : NaN;
+    if (!Number.isNaN(created) && created < state.lastRun - 6 * 3600_000) continue;
+    if (!RELEVANT.test(`${p.title} ${p.content ?? ''}`)) continue;
+    found.set(p.id, { ...p, submolt: p.submolt ?? { name: sm } });
+  }
+}
 for (const q of QUERIES) {
   const r = (await api(`/search?q=${encodeURIComponent(q)}&limit=10`).catch(() => ({}))) as Record<string, unknown>;
   type Hit = Post & { type?: string; upvotes?: number; downvotes?: number; post_id?: string };
