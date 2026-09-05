@@ -72,7 +72,8 @@ if (cmd === 'status') {
   console.log(JSON.stringify(await api(`/posts/${a}/comments?sort=new`), null, 2).slice(0, 4000));
 } else if (cmd === 'comment') {
   // comment <postId> <parentCommentId|-> <text | @file>   (use @file for multi-line text; shells mangle newlines)
-  const [, , , parent, textArg] = process.argv.slice(0);
+  const parent = process.argv[4];   // argv: node, script, 'comment', postId, parentId|-, text
+  const textArg = process.argv[5];
   if (!a || !textArg) throw new Error('usage: comment <postId> <parentCommentId|-> <text | @path/to/file>');
   const content = textArg.startsWith('@') ? readFileSync(textArg.slice(1), 'utf8').replace(/\r\n/g, '\n').trim() : textArg;
   const body: Record<string, string> = { content };
