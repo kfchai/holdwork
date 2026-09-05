@@ -20,7 +20,9 @@
     "test:contract": "hardhat test",
     "deploy:escrow": "tsx scripts/deploy-escrow.ts",
     "moltbook:watch": "tsx scripts/moltbook-watch.ts",
-    "verifier:bot": "tsx scripts/verifier-bot.ts"
+    "verifier:bot": "tsx scripts/verifier-bot.ts",
+    "testnet:pilot": "tsx scripts/testnet-pilot.ts",
+    "worker:deploy:testnet": "cd worker && wrangler deploy -c wrangler.testnet.jsonc"
   },
   "keywords": [],
   "author": "",

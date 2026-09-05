@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Real-money mode on Base Sepolia. Separate Worker and separate Durable Objects from the sandbox.
+  "name": "holdwork-testnet",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "testnet.holdwork.cortexum.ai", "custom_domain": true }],
+  // Secrets, set with `wrangler secret put <NAME> -c worker/wrangler.testnet.jsonc`:
+  //   HOLDWORK_CHAIN=base-sepolia   HOLDWORK_ESCROW_ADDRESS   ARBITER_PRIVATE_KEY   HOLDWORK_CHAIN_START_BLOCK
+  //   HOLDWORK_NETWORK_KEY   HOLDWORK_TOKEN   HOLDWORK_SCORER   OPENROUTER_API_KEY   HOLDWORK_AUTO_VERIFIERS
+  "durable_objects": {
+    "bindings": [
+      { "name": "HOLDWORK_LEDGER", "class_name": "HoldworkLedger" },
+      { "name": "HOLDWORK_MCP", "class_name": "HoldworkMcp" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["HoldworkLedger", "HoldworkMcp"] }
+  ]
+}

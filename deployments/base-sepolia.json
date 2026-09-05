@@ -1,0 +1,13 @@
+{
+  "chain": "base-sepolia",
+  "chainId": 84532,
+  "address": "0x1568a04b1eb65363224b37b074ad83bf69408aa6",
+  "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "owner": "0xD1883DA71F5E6249B381BE2F469a70Fd295BcAb0",
+  "arbiter": "0xD1883DA71F5E6249B381BE2F469a70Fd295BcAb0",
+  "feeAccount": "0xD1883DA71F5E6249B381BE2F469a70Fd295BcAb0",
+  "maxPrice": "50000000",
+  "deployTx": "0x488f4ce401e69f95da395b24b2c22ad2a6d969c6515ba20b707eee3d7178279d",
+  "block": "46406585",
+  "deployedAt": "2026-09-05T04:10:59.487Z"
+}
