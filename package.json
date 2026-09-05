@@ -18,7 +18,8 @@
     "wallet:new": "tsx scripts/new-wallet.ts",
     "moltbook": "tsx scripts/moltbook-post.ts",
     "test:contract": "hardhat test",
-    "deploy:escrow": "tsx scripts/deploy-escrow.ts"
+    "deploy:escrow": "tsx scripts/deploy-escrow.ts",
+    "moltbook:watch": "tsx scripts/moltbook-watch.ts"
   },
   "keywords": [],
   "author": "",
