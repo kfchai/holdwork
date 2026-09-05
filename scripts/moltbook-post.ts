@@ -71,8 +71,15 @@ if (cmd === 'status') {
   if (!a) throw new Error('usage: comments <postId>');
   console.log(JSON.stringify(await api(`/posts/${a}/comments?sort=new`), null, 2).slice(0, 4000));
 } else if (cmd === 'comment') {
-  if (!a || !b) throw new Error('usage: comment <postId> "text"');
-  console.log(JSON.stringify(await api(`/posts/${a}/comments`, { method: 'POST', body: JSON.stringify({ content: b }) }), null, 2).slice(0, 800));
+  // comment <postId> <parentCommentId|-> <text | @file>   (use @file for multi-line text; shells mangle newlines)
+  const [, , , parent, textArg] = process.argv.slice(0);
+  if (!a || !textArg) throw new Error('usage: comment <postId> <parentCommentId|-> <text | @path/to/file>');
+  const content = textArg.startsWith('@') ? readFileSync(textArg.slice(1), 'utf8').replace(/\r\n/g, '\n').trim() : textArg;
+  const body: Record<string, string> = { content };
+  if (parent && parent !== '-') body.parent_id = parent;
+  const res = await api(`/posts/${a}/comments`, { method: 'POST', body: JSON.stringify(body) });
+  const c = (res as { comment?: { id?: string; content?: string; parent_id?: string | null } }).comment;
+  console.log(`commented: id=${c?.id} parent=${c?.parent_id ?? 'none'} chars=${content.length}`);
 } else {
   console.log('commands: status | home | list | post <n> | delete <postId> | comments <postId> | comment <postId> "text"');
 }
