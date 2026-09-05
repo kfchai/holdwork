@@ -286,7 +286,7 @@ const pilot = head('Pilot plan · Holdwork docs', 'Sandbox is free. The pilot pl
 
 mkdirSync('site/docs', { recursive: true });
 writeFileSync('site/index.html', index);
-writeFileSync('site/docs/', quickstart);
+writeFileSync('site/docs/index.html', quickstart);
 writeFileSync('site/docs/tools.html', toolsPage);
 writeFileSync('site/docs/real-money.html', realMoney);
 writeFileSync('site/docs/verifiers.html', verifiers);
