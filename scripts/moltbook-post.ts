@@ -66,6 +66,10 @@ if (cmd === 'status') {
 } else if (cmd === 'delete') {
   if (!a) throw new Error('usage: delete <postId>');
   console.log(JSON.stringify(await api(`/posts/${a}`, { method: 'DELETE' }), null, 2).slice(0, 400));
+} else if (cmd === 'delete-comment') {
+  // Undocumented but works: DELETE /comments/:id on our own comment.
+  if (!a) throw new Error('usage: delete-comment <commentId>');
+  console.log(JSON.stringify(await api(`/comments/${a}`, { method: 'DELETE' }), null, 2).slice(0, 300));
 } else if (cmd === 'home') {
   const h = await api('/home');
   console.log(JSON.stringify(h, null, 2).slice(0, 3000));
