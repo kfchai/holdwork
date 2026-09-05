@@ -95,6 +95,10 @@ export interface Settlement {
   verifierFeesPaid: Micro;
   verifierFeesPaidBy: 'SELLER_STAKE' | 'BUYER_BOND' | 'HOLDWORK' | 'NONE';
   settledAt: number;
+  /** sha256 of the terms frozen at creation (criteriaHash on the contract), repeated on the receipt. */
+  criteriaHash: string;
+  /** sha256 of the delivery that was judged: final output, compute report, round number. */
+  evidenceHash: string;
 }
 
 export interface ContractEvent {
@@ -121,6 +125,12 @@ export interface Contract {
   bond: Micro;
   fullPayQuality: number;
   zeroPayQuality: number;
+  /**
+   * sha256 over the terms frozen at creation: title, description, category, acceptance criteria,
+   * output schema, payout thresholds, offer deadline, delivery window. Immutable; nothing after
+   * creation can change what "done" meant.
+   */
+  criteriaHash: string;
   createdAt: number;
   offerDeadline: number;
   deliveryWindowMs: number;

@@ -112,6 +112,7 @@ export function contractView(c: Contract) {
     stake: fmt(c.stake),
     bond: fmt(c.bond),
     thresholds: { fullPay: c.fullPayQuality, zeroPay: c.zeroPayQuality },
+    criteriaHash: c.criteriaHash ?? null,
     deadlines: {
       offer: new Date(c.offerDeadline).toISOString(),
       delivery: c.deliveryDeadline ? new Date(c.deliveryDeadline).toISOString() : null,
@@ -132,6 +133,7 @@ export function contractView(c: Contract) {
           refund: fmt(c.settlement.refund), stakeReturned: fmt(c.settlement.stakeReturned),
           bondReturned: fmt(c.settlement.bondReturned), bondForfeited: fmt(c.settlement.bondForfeited),
           verifierFeesPaid: fmt(c.settlement.verifierFeesPaid), verifierFeesPaidBy: c.settlement.verifierFeesPaidBy,
+          criteriaHash: c.settlement.criteriaHash ?? null, evidenceHash: c.settlement.evidenceHash ?? null,
         }
       : null,
     latestOutput: c.deliveries.at(-1)?.output ?? null,

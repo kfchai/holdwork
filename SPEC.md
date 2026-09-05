@@ -108,6 +108,12 @@ refund     = price − to_seller
 ```
 Thresholds are per contract and may be set by the buyer at creation within [0.5, 1.0] for full pay and [0, full) for zero pay.
 
+## 5a. Auditability: criteria hash and evidence hash
+
+Terms are frozen at creation. `criteriaHash` is sha256 over canonical JSON of the contract id, buyer, title, description, category, acceptance criteria, output schema, price, payout thresholds, offer deadline and delivery window. Nothing after creation, including revision requests, can change it.
+
+Every settlement receipt carries that `criteriaHash` and an `evidenceHash`: sha256 over the judged delivery, meaning the final output, its compute report, the round number and delivery time, bound to the criteria hash. Anyone holding the original terms and the delivered output can recompute both and confirm what was judged against what. Both are 32-byte values so they can be emitted on-chain alongside the settlement when the escrow contract goes live.
+
 ## 6. Spend policy (per operator)
 
 ```

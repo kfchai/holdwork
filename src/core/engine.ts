@@ -5,6 +5,7 @@ import { selectVerifiers, shouldSample } from './sampling.js';
 import { computePayout } from './payout.js';
 import { consensus, ewma, updateBuyerCalibration, updateVerifierCalibration } from './calibration.js';
 import { Ledger, FEE_ACCOUNT, bondAccount, escrowAccount, stakeAccount } from './ledger.js';
+import { canonicalHash } from './hash.js';
 import {
   HoldworkError,
   type Agent,
@@ -139,24 +140,37 @@ export class HoldworkEngine {
 
     const now = this.now();
     const id = `hw_${randomUUID().slice(0, 12)}`;
-    const contract: Contract = {
-      id,
-      state: 'OPEN',
-      buyerId: buyer.id,
-      buyerOperatorId: buyer.operatorId,
+    const terms = {
       title: input.title,
       description: input.description,
       category: input.category,
       outputSchema: input.outputSchema ?? null,
       acceptanceCriteria: input.acceptanceCriteria ?? '',
       price: input.price,
+      fullPayQuality: fullPay,
+      zeroPayQuality: zeroPay,
+      offerDeadline: now + (input.offerWindowMs ?? DAY),
+      deliveryWindowMs: input.deliveryWindowMs ?? DAY,
+    };
+    const contract: Contract = {
+      id,
+      state: 'OPEN',
+      buyerId: buyer.id,
+      buyerOperatorId: buyer.operatorId,
+      title: terms.title,
+      description: terms.description,
+      category: terms.category,
+      outputSchema: terms.outputSchema,
+      acceptanceCriteria: terms.acceptanceCriteria,
+      price: input.price,
       stake: maxMicro(bps(input.price, this.params.sellerStakeBps), this.params.minStake),
       bond: maxMicro(bps(input.price, this.params.disputeBondBps), this.params.minBond),
       fullPayQuality: fullPay,
       zeroPayQuality: zeroPay,
+      criteriaHash: canonicalHash({ v: 1, id, buyerId: buyer.id, ...terms }),
       createdAt: now,
-      offerDeadline: now + (input.offerWindowMs ?? DAY),
-      deliveryWindowMs: input.deliveryWindowMs ?? DAY,
+      offerDeadline: terms.offerDeadline,
+      deliveryWindowMs: terms.deliveryWindowMs,
       deliveries: [],
       revisions: [],
       verification: [],
@@ -164,7 +178,7 @@ export class HoldworkEngine {
     };
     this.ledger.transfer(buyer.id, escrowAccount(id), input.price, now, 'lock budget');
     this.contracts.set(id, contract);
-    this.log(contract, 'CREATED', buyer.id, { price: input.price.toString() });
+    this.log(contract, 'CREATED', buyer.id, { price: input.price.toString(), criteriaHash: contract.criteriaHash });
     return contract;
   }
 
@@ -542,6 +556,12 @@ export class HoldworkEngine {
       if (stakeReturned > 0n) this.ledger.transfer(stakeAccount(c.id), c.sellerId!, stakeReturned, now, 'return seller stake');
     }
 
+    const judged = c.deliveries[c.deliveries.length - 1];
+    const evidenceHash = canonicalHash({
+      v: 1, contractId: c.id, criteriaHash: c.criteriaHash,
+      round: judged?.round ?? 0, output: judged?.output ?? null, compute: judged?.compute ?? null,
+      deliveredAt: judged?.deliveredAt ?? null,
+    });
     c.settlement = {
       quality,
       qualitySource: source,
@@ -556,11 +576,14 @@ export class HoldworkEngine {
       verifierFeesPaid: 0n,
       verifierFeesPaidBy: 'NONE',
       settledAt: now,
+      criteriaHash: c.criteriaHash,
+      evidenceHash,
       ...extra,
     };
     c.state = 'SETTLED';
     this.log(c, 'SETTLED', undefined, {
       quality, source, sellerNet: p.sellerNet.toString(), fee: p.fee.toString(), refund: p.refund.toString(),
+      criteriaHash: c.criteriaHash, evidenceHash,
     });
   }
 
