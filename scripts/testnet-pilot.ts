@@ -48,23 +48,30 @@ const show = async (label: string) => {
 };
 
 // ───────── fund pilot wallets from the arbiter (gas + USDC) ─────────
+/** Top up a pilot wallet to the given minimums from the arbiter wallet, transferring only the shortfall. */
 async function ensureFunded(a: Address, minEth: bigint, minUsdc: bigint) {
   const w = wallet(arbiter);
-  if ((await pub.getBalance({ address: a })) < minEth) {
-    const h = await w.sendTransaction({ to: a, value: minEth });
+  const eth = await pub.getBalance({ address: a });
+  if (eth < minEth) {
+    const h = await w.sendTransaction({ to: a, value: minEth - eth });
     await pub.waitForTransactionReceipt({ hash: h });
-    console.log(`funded ${a} with gas: ${h}`);
+    console.log(`topped up ${a} gas by ${formatUnits(minEth - eth, 18)}: ${h}`);
   }
-  if ((await usdcBal(a)) < minUsdc) {
-    const h = await w.writeContract({ address: dep.usdc, abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] }], functionName: 'transfer', args: [a, minUsdc] });
+  const u = await usdcBal(a);
+  if (u < minUsdc) {
+    const need = minUsdc - u;
+    const have = await usdcBal(arbiter.address);
+    if (have < need) throw new Error(`arbiter has ${formatUnits(have, 6)} USDC, needs ${formatUnits(need, 6)} to fund ${a}; claim more from the faucet`);
+    const h = await w.writeContract({ address: dep.usdc, abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] }], functionName: 'transfer', args: [a, need] });
     await pub.waitForTransactionReceipt({ hash: h });
-    console.log(`funded ${a} with USDC: ${h}`);
+    console.log(`topped up ${a} USDC by ${formatUnits(need, 6)}: ${h}`);
   }
 }
 
 await show('start');
-await ensureFunded(buyer.address, parseUnits('0.0003', 18), parseUnits('3', 6));
-await ensureFunded(seller.address, parseUnits('0.0003', 18), parseUnits('0.5', 6));
+// Buyer needs price (2) + bond (0.2) for a dispute; seller needs the stake (0.1).
+await ensureFunded(buyer.address, parseUnits('0.0003', 18), parseUnits('2.3', 6));
+await ensureFunded(seller.address, parseUnits('0.0003', 18), parseUnits('0.2', 6));
 await show('after funding');
 
 // ───────── MCP ─────────
