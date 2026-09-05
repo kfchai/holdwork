@@ -5,13 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc -p worker/tsconfig.json",
+    "typecheck": "tsc --noEmit && npm run worker:types && tsc -p worker/tsconfig.json",
     "mcp": "tsx src/mcp/server.ts",
     "compile:contract": "tsx scripts/compile-contract.ts",
     "smoke": "tsx scripts/smoke-mcp.ts",
-    "worker:types": "wrangler types -c worker/wrangler.jsonc",
-    "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
-    "worker:deploy": "wrangler deploy -c worker/wrangler.jsonc",
+    "worker:types": "cd worker && wrangler types",
+    "worker:dev": "cd worker && wrangler dev",
+    "worker:deploy": "cd worker && wrangler deploy",
     "smoke:remote": "tsx scripts/smoke-remote.ts",
     "live:dispute": "tsx scripts/live-dispute.ts",
     "try:scorer": "tsx scripts/try-scorer.ts",
@@ -34,7 +34,8 @@
     "solc": "^0.8.28",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "wrangler": "^4.129.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",

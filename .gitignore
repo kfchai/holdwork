@@ -14,3 +14,4 @@ artifacts/
 cache/
 deployments/*.local.json
 .moltbook-poster.pid
+/worker-configuration.d.ts

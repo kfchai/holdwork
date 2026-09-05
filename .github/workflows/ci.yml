@@ -14,7 +14,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: npx wrangler types -c worker/wrangler.jsonc && npx tsc -p worker/tsconfig.json
+      - run: cd worker && npx wrangler types
+      - run: npx tsc -p worker/tsconfig.json
       - run: npx vitest run
       - run: npx tsx scripts/compile-contract.ts
       - run: npx hardhat test
