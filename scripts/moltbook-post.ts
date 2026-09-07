@@ -42,6 +42,23 @@ function sections() {
   return out;
 }
 
+
+/**
+ * Moltbook hides new posts and comments until an obfuscated math challenge is answered via
+ * POST /verify within 5 minutes. Unanswered challenges expire, the content stays hidden and is
+ * later marked is_spam; 10 consecutive failures suspend the account. This prints the challenge
+ * so the operator can answer it with `verify <code> <answer>`.
+ */
+function showChallenge(res: Record<string, unknown>, kind: 'post' | 'comment') {
+  const body = res[kind] as { verification_status?: string; verification?: { verification_code?: string; challenge_text?: string; expires_at?: string } } | undefined;
+  const v = body?.verification;
+  if (!res.verification_required && !v) { console.log('published immediately (no verification required)'); return; }
+  console.log(`VERIFICATION REQUIRED (expires ${v?.expires_at ?? '?'}); status=${body?.verification_status}`);
+  console.log(`  code: ${v?.verification_code}`);
+  console.log(`  challenge: ${v?.challenge_text}`);
+  console.log(`  answer with: npx tsx scripts/moltbook-post.ts verify ${v?.verification_code} <number>`);
+}
+
 const [cmd, a, b] = process.argv.slice(2);
 mkdirSync('.wallet', { recursive: true });
 const STAMP = '.wallet/moltbook-last-post';
@@ -63,6 +80,7 @@ if (cmd === 'status') {
   const res = await api('/posts', { method: 'POST', body: JSON.stringify({ submolt_name: s.submolt, title: s.title, content: s.content, type: 'text' }) });
   writeFileSync(STAMP, String(Date.now()));
   console.log(`posted to m/${s.submolt}:`, JSON.stringify(res, null, 2).slice(0, 800));
+  showChallenge(res, 'post');
 } else if (cmd === 'delete') {
   if (!a) throw new Error('usage: delete <postId>');
   console.log(JSON.stringify(await api(`/posts/${a}`, { method: 'DELETE' }), null, 2).slice(0, 400));
@@ -96,6 +114,11 @@ if (cmd === 'status') {
   writeFileSync(CSTAMP, [...today, Date.now()].join('\n') + '\n');
   const c = (res as { comment?: { id?: string; content?: string; parent_id?: string | null } }).comment;
   console.log(`commented: id=${c?.id} parent=${c?.parent_id ?? 'none'} chars=${content.length}`);
+  showChallenge(res, 'comment');
+} else if (cmd === 'verify') {
+  // verify <verification_code> <answer>   answer is a plain number, e.g. 15 or 15.50
+  if (!a || !b) throw new Error('usage: verify <verification_code> <answer>');
+  console.log(JSON.stringify(await api('/verify', { method: 'POST', body: JSON.stringify({ verification_code: a, answer: b }) }), null, 2).slice(0, 500));
 } else {
-  console.log('commands: status | home | list | post <n> | delete <postId> | comments <postId> | comment <postId> "text"');
+  console.log('commands: status | home | list | post <n> | delete <postId> | delete-comment <id> | comments <postId> | comment <postId> <parentId|-> <text|@file> | verify <code> <answer>');
 }
