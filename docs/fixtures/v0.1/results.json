@@ -1,0 +1,1749 @@
+{
+  "meta": {
+    "study": "mtvk3y49",
+    "endpoint": "https://holdwork.cortexum.ai",
+    "runs": 10,
+    "generatedAt": "2026-09-10T13:58:42.476Z",
+    "condition": "independent (current pipeline; pool of three verifiers, same model family)",
+    "fixture": {
+      "task": {
+        "title": "Cited summary of three source documents (fixture study v0.1)",
+        "category": "research",
+        "price": "5",
+        "description": "Return a JSON array of three objects with source_id, summary, and uncertainty. Include one object per source. Keep each summary under 18 words. uncertainty must be \"none\" or a short unresolved ambiguity. Cite only D1 through D3.\n\nD1: At 09:00, node A received 20 jobs. Nineteen completed before the 60-second deadline; J17 timed out. Retries were disabled.\n\nD2: Release R4 changed the queue limit from 50 to 80. In the next equal-length window, warnings fell from 12 to 3. The log does not identify a cause.\n\nD3: The controller stopped after the operator cleared the alarm. No event record says whether the clearing caused the stop or merely preceded it.",
+        "acceptanceCriteria": "One object per source, D1 to D3, each summary under 18 words. Each summary must be faithful to its source: no statement may be reversed or contradicted. Where a source leaves a question open, the summary must not resolve it and uncertainty must name the open question; where the source is unambiguous, uncertainty is \"none\".",
+        "outputSchema": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": [
+              "source_id",
+              "summary",
+              "uncertainty"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "source_id": {
+                "type": "string",
+                "enum": [
+                  "D1",
+                  "D2",
+                  "D3"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 140
+              },
+              "uncertainty": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 140
+              }
+            }
+          }
+        }
+      },
+      "deliverables": {
+        "A": [
+          {
+            "source_id": "D1",
+            "summary": "Node A received 20 jobs at 09:00; 19 met the 60-second deadline, J17 timed out, retries disabled.",
+            "uncertainty": "none"
+          },
+          {
+            "source_id": "D2",
+            "summary": "R4 raised the queue limit from 50 to 80; warnings then fell from 12 to 3.",
+            "uncertainty": "The log does not identify what caused the drop in warnings."
+          },
+          {
+            "source_id": "D3",
+            "summary": "The controller stopped after the operator cleared the alarm.",
+            "uncertainty": "No record shows whether clearing the alarm caused the stop or merely preceded it."
+          }
+        ],
+        "B": [
+          {
+            "source_id": "D1",
+            "summary": "Node A received 20 jobs at 09:00; 19 met the 60-second deadline, J17 timed out, retries disabled.",
+            "uncertainty": "none"
+          },
+          {
+            "source_id": "D2",
+            "summary": "R4 lowered the queue limit from 80 to 50; warnings then fell from 12 to 3.",
+            "uncertainty": "The log does not identify what caused the drop in warnings."
+          },
+          {
+            "source_id": "D3",
+            "summary": "The controller stopped after the operator cleared the alarm.",
+            "uncertainty": "No record shows whether clearing the alarm caused the stop or merely preceded it."
+          }
+        ],
+        "C": [
+          {
+            "source_id": "D1",
+            "summary": "Node A received 20 jobs at 09:00; 19 met the 60-second deadline, J17 timed out, retries disabled.",
+            "uncertainty": "none"
+          },
+          {
+            "source_id": "D2",
+            "summary": "R4 raised the queue limit from 50 to 80; warnings then fell from 12 to 3.",
+            "uncertainty": "The log does not identify what caused the drop in warnings."
+          },
+          {
+            "source_id": "D3",
+            "summary": "Clearing the alarm caused the controller to stop.",
+            "uncertainty": "none"
+          }
+        ]
+      }
+    }
+  },
+  "results": [
+    {
+      "run": 1,
+      "fixture": "A",
+      "contractId": "hw_e91daa49-1f5",
+      "seconds": 66,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            1,
+            1
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.98
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 1,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.98,
+            0.98,
+            1
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.98
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.9865411241988119,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.9865411241988119,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 1,
+      "fixture": "B",
+      "contractId": "hw_1a4168dc-9d2",
+      "seconds": 90,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.55,
+            0.55,
+            0.6
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.97
+          ],
+          "spread": 0.04999999999999993,
+          "variance": 0.000555555555555554,
+          "result": {
+            "quality": 0.5663445612862207,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5663445612862207,
+      "source": "NETWORK",
+      "toSeller": "2.079305",
+      "refund": "2.920695"
+    },
+    {
+      "run": 1,
+      "fixture": "C",
+      "contractId": "hw_e295dda6-f55",
+      "seconds": 164,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.65,
+            0.63,
+            0.65
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.95
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.6432431844857794,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.62,
+            0.62,
+            0.65
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.0002000000000000004,
+          "result": {
+            "quality": 0.6298549263560256,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.6298549263560256,
+      "source": "NETWORK",
+      "toSeller": "2.873185",
+      "refund": "2.126815"
+    },
+    {
+      "run": 2,
+      "fixture": "A",
+      "contractId": "hw_b1a69920-f59",
+      "seconds": 65,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-2",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            1,
+            1,
+            0.98
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.97
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.9934712797746622,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.98,
+            0.98,
+            0.98
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.97
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 0.98,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.98,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 2,
+      "fixture": "B",
+      "contractId": "hw_200cead7-e2c",
+      "seconds": 84,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-2",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.6,
+            0.62,
+            0.55
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.97
+          ],
+          "spread": 0.06999999999999995,
+          "variance": 0.0008666666666666652,
+          "result": {
+            "quality": 0.5902887132100822,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5902887132100822,
+      "source": "NETWORK",
+      "toSeller": "2.37861",
+      "refund": "2.62139"
+    },
+    {
+      "run": 2,
+      "fixture": "C",
+      "contractId": "hw_ba5cc38d-a2d",
+      "seconds": 148,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.63,
+            0.65,
+            0.62
+          ],
+          "confidences": [
+            0.97,
+            0.95,
+            0.95
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.6333610943021931,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.65,
+            0.62,
+            0.65
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00020000000000000033,
+          "result": {
+            "quality": 0.6400607916388054,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.6400607916388054,
+      "source": "NETWORK",
+      "toSeller": "3.00076",
+      "refund": "1.99924"
+    },
+    {
+      "run": 3,
+      "fixture": "A",
+      "contractId": "hw_df752b9b-f20",
+      "seconds": 56,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            1,
+            1,
+            1
+          ],
+          "confidences": [
+            0.98,
+            0.98,
+            0.97
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 1,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            0.97,
+            0.99
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.9867195771526485,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.9867195771526485,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 3,
+      "fixture": "B",
+      "contractId": "hw_130079ac-35f",
+      "seconds": 90,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.5,
+            0.62,
+            0.33
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.97
+          ],
+          "spread": 0.29,
+          "variance": 0.014155555555555555,
+          "result": {
+            "quality": 0.4837708782539162,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.4837708782539162,
+      "source": "NETWORK",
+      "toSeller": "1.047135",
+      "refund": "3.952865"
+    },
+    {
+      "run": 3,
+      "fixture": "C",
+      "contractId": "hw_09ac2ca1-458",
+      "seconds": 120,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.6,
+            0.65,
+            0.65
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.95
+          ],
+          "spread": 0.050000000000000044,
+          "variance": 0.0005555555555555566,
+          "result": {
+            "quality": 0.6330992368402549,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.6330992368402549,
+      "source": "NETWORK",
+      "toSeller": "2.91374",
+      "refund": "2.08626"
+    },
+    {
+      "run": 4,
+      "fixture": "A",
+      "contractId": "hw_1d8c5683-207",
+      "seconds": 86,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            1,
+            1,
+            1
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.97
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 1,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            0.98,
+            0.97
+          ],
+          "confidences": [
+            0.98,
+            0.95,
+            0.95
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.9836383800633364,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.9836383800633364,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 4,
+      "fixture": "B",
+      "contractId": "hw_47421503-368",
+      "seconds": 132,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.55,
+            0.5,
+            0.55
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.97
+          ],
+          "spread": 0.050000000000000044,
+          "variance": 0.0005555555555555566,
+          "result": {
+            "quality": 0.5333962194399244,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5333962194399244,
+      "source": "NETWORK",
+      "toSeller": "1.667455",
+      "refund": "3.332545"
+    },
+    {
+      "run": 4,
+      "fixture": "C",
+      "contractId": "hw_01afb33b-01a",
+      "seconds": 185,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.67,
+            0.6,
+            0.65
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.95
+          ],
+          "spread": 0.07000000000000006,
+          "variance": 0.0008666666666666683,
+          "result": {
+            "quality": 0.6398517570492988,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.6398517570492988,
+      "source": "NETWORK",
+      "toSeller": "2.998145",
+      "refund": "2.001855"
+    },
+    {
+      "run": 5,
+      "fixture": "A",
+      "contractId": "hw_b86c3cf3-1be",
+      "seconds": 100,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.97,
+            1,
+            0.97
+          ],
+          "confidences": [
+            0.95,
+            0.98,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00020000000000000033,
+          "result": {
+            "quality": 0.9801297778724375,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            0.97,
+            0.98
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.983473813599968,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.983473813599968,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 5,
+      "fixture": "B",
+      "contractId": "hw_7ed63bb5-140",
+      "seconds": 158,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-2",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.65,
+            0.55,
+            0.62
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.97
+          ],
+          "spread": 0.09999999999999998,
+          "variance": 0.0017555555555555545,
+          "result": {
+            "quality": 0.6068989996924508,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.6068989996924508,
+      "source": "NETWORK",
+      "toSeller": "2.586235",
+      "refund": "2.413765"
+    },
+    {
+      "run": 5,
+      "fixture": "C",
+      "contractId": "hw_e3a57c23-b84",
+      "seconds": 200,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.55,
+            0.62,
+            0.6
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.95
+          ],
+          "spread": 0.06999999999999995,
+          "variance": 0.0008666666666666653,
+          "result": {
+            "quality": 0.5897421453883251,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5897421453883251,
+      "source": "NETWORK",
+      "toSeller": "2.371775",
+      "refund": "2.628225"
+    },
+    {
+      "run": 6,
+      "fixture": "A",
+      "contractId": "hw_e06f0287-3d4",
+      "seconds": 104,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            1,
+            0.98
+          ],
+          "confidences": [
+            0.98,
+            0.98,
+            0.97
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.9934586536684831,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.98,
+            1,
+            0.97
+          ],
+          "confidences": [
+            0.97,
+            0.98,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.9834393301810838,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.9834393301810838,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 6,
+      "fixture": "B",
+      "contractId": "hw_9f7c89f8-08c",
+      "seconds": 140,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.62,
+            0.55,
+            0.55
+          ],
+          "confidences": [
+            0.97,
+            0.95,
+            0.97
+          ],
+          "spread": 0.06999999999999995,
+          "variance": 0.0010888888888888873,
+          "result": {
+            "quality": 0.5736919963330095,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5736919963330095,
+      "source": "NETWORK",
+      "toSeller": "2.17115",
+      "refund": "2.82885"
+    },
+    {
+      "run": 6,
+      "fixture": "C",
+      "contractId": "hw_6295ba5d-c18",
+      "seconds": 183,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.55,
+            0.62,
+            0.67
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.95
+          ],
+          "spread": 0.12,
+          "variance": 0.002422222222222222,
+          "result": {
+            "quality": 0.6130137273247502,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.6130137273247502,
+      "source": "NETWORK",
+      "toSeller": "2.66267",
+      "refund": "2.33733"
+    },
+    {
+      "run": 7,
+      "fixture": "A",
+      "contractId": "hw_27266010-c1b",
+      "seconds": 144,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            1,
+            0.97
+          ],
+          "confidences": [
+            0.98,
+            0.98,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.0002000000000000004,
+          "result": {
+            "quality": 0.9901310086893682,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.97,
+            0.98,
+            1
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.98
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.983323068334029,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.983323068334029,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 7,
+      "fixture": "B",
+      "contractId": "hw_98f28e4e-b95",
+      "seconds": 347,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.65,
+            0.62,
+            0.65
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.98
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00020000000000000033,
+          "result": {
+            "quality": 0.6400571304499053,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.6,
+            0.65,
+            0.6
+          ],
+          "confidences": [
+            0.97,
+            0.95,
+            0.97
+          ],
+          "spread": 0.050000000000000044,
+          "variance": 0.0005555555555555566,
+          "result": {
+            "quality": 0.6163977379932943,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.6163977379932943,
+      "source": "NETWORK",
+      "toSeller": "2.70497",
+      "refund": "2.29503"
+    },
+    {
+      "run": 7,
+      "fixture": "C",
+      "contractId": "hw_3d3debb2-ea4",
+      "seconds": 412,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.62,
+            0.62,
+            0.62
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.95
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 0.62,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.6,
+            0.6,
+            0.65
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.97
+          ],
+          "spread": 0.050000000000000044,
+          "variance": 0.0005555555555555565,
+          "result": {
+            "quality": 0.6166031588660851,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.6166031588660851,
+      "source": "NETWORK",
+      "toSeller": "2.70754",
+      "refund": "2.29246"
+    },
+    {
+      "run": 8,
+      "fixture": "A",
+      "contractId": "hw_23f01d59-9ba",
+      "seconds": 91,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            0.97,
+            1
+          ],
+          "confidences": [
+            0.98,
+            0.95,
+            0.97
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.0002000000000000004,
+          "result": {
+            "quality": 0.9901961506132597,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            1,
+            1,
+            1
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.95
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 1,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 1,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 8,
+      "fixture": "B",
+      "contractId": "hw_a24e4781-498",
+      "seconds": 125,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.5,
+            0.65,
+            0.65
+          ],
+          "confidences": [
+            0.97,
+            0.95,
+            0.95
+          ],
+          "spread": 0.15000000000000002,
+          "variance": 0.005000000000000001,
+          "result": {
+            "quality": 0.5990370852932962,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5990370852932962,
+      "source": "NETWORK",
+      "toSeller": "2.487965",
+      "refund": "2.512035"
+    },
+    {
+      "run": 8,
+      "fixture": "C",
+      "contractId": "hw_ae804ba0-aea",
+      "seconds": 240,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.65,
+            0.62,
+            0.63
+          ],
+          "confidences": [
+            0.97,
+            0.96,
+            0.95
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.6333993640488825,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.55,
+            0.55,
+            0.62
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.97
+          ],
+          "spread": 0.06999999999999995,
+          "variance": 0.0010888888888888873,
+          "result": {
+            "quality": 0.5736330436108473,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.5736330436108473,
+      "source": "NETWORK",
+      "toSeller": "2.170415",
+      "refund": "2.829585"
+    },
+    {
+      "run": 9,
+      "fixture": "A",
+      "contractId": "hw_cf14d773-401",
+      "seconds": 63,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.98,
+            0.98,
+            0.97
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.97
+          ],
+          "spread": 0.010000000000000009,
+          "variance": 0.000022222222222222264,
+          "result": {
+            "quality": 0.9766445521789673,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.97,
+            0.98,
+            1
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.98
+          ],
+          "spread": 0.030000000000000027,
+          "variance": 0.00015555555555555583,
+          "result": {
+            "quality": 0.9833896094475243,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.9833896094475243,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 9,
+      "fixture": "C",
+      "contractId": "hw_18b57ed0-998",
+      "seconds": 148,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            0.55,
+            0.65,
+            0.6
+          ],
+          "confidences": [
+            0.95,
+            0.95,
+            0.95
+          ],
+          "spread": 0.09999999999999998,
+          "variance": 0.001666666666666666,
+          "result": {
+            "quality": 0.5999967257868728,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.5999967257868728,
+      "source": "NETWORK",
+      "toSeller": "2.49996",
+      "refund": "2.50004"
+    },
+    {
+      "run": 9,
+      "fixture": "B",
+      "contractId": "hw_8f27c9fd-391",
+      "seconds": 191,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.6,
+            0.62,
+            0.62
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.95
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.6132898702449722,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-3",
+            "verifier-glm-1",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.62,
+            0.62,
+            0.6
+          ],
+          "confidences": [
+            0.97,
+            0.97,
+            0.97
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.6133503035894818,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.6133503035894818,
+      "source": "NETWORK",
+      "toSeller": "2.66688",
+      "refund": "2.33312"
+    },
+    {
+      "run": 10,
+      "fixture": "A",
+      "contractId": "hw_a5da86a2-464",
+      "seconds": 83,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            1,
+            1,
+            0.98
+          ],
+          "confidences": [
+            0.97,
+            0.98,
+            0.97
+          ],
+          "spread": 0.020000000000000018,
+          "variance": 0.00008888888888888904,
+          "result": {
+            "quality": 0.9933683162101488,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-3",
+            "verifier-glm-1"
+          ],
+          "scores": [
+            1,
+            1,
+            1
+          ],
+          "confidences": [
+            0.97,
+            0.98,
+            0.98
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 1,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 1,
+      "source": "NETWORK",
+      "toSeller": "5",
+      "refund": "0"
+    },
+    {
+      "run": 10,
+      "fixture": "C",
+      "contractId": "hw_5c1613c9-fb5",
+      "seconds": 174,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-2",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.55,
+            0.6,
+            0.62
+          ],
+          "confidences": [
+            0.95,
+            0.97,
+            0.97
+          ],
+          "spread": 0.06999999999999995,
+          "variance": 0.0008666666666666653,
+          "result": {
+            "quality": 0.590264741474473,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": false,
+      "schemaValid": true,
+      "quality": 0.590264741474473,
+      "source": "NETWORK",
+      "toSeller": "2.37831",
+      "refund": "2.62169"
+    },
+    {
+      "run": 10,
+      "fixture": "B",
+      "contractId": "hw_df7256d7-935",
+      "seconds": 289,
+      "rounds": [
+        {
+          "round": 1,
+          "reason": "DISPUTE",
+          "verifiers": [
+            "verifier-glm-2",
+            "verifier-glm-1",
+            "verifier-glm-3"
+          ],
+          "scores": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "confidences": [
+            0.97,
+            0.95,
+            0.95
+          ],
+          "spread": 0,
+          "variance": 0,
+          "result": {
+            "quality": 0.6,
+            "lowConfidence": false,
+            "lowVariance": true
+          }
+        },
+        {
+          "round": 2,
+          "reason": "COLLUSION_RERUN",
+          "verifiers": [
+            "verifier-glm-1",
+            "verifier-glm-3",
+            "verifier-glm-2"
+          ],
+          "scores": [
+            0.55,
+            0.5,
+            0.65
+          ],
+          "confidences": [
+            0.98,
+            0.97,
+            0.95
+          ],
+          "spread": 0.15000000000000002,
+          "variance": 0.0038888888888888896,
+          "result": {
+            "quality": 0.5660305455379159,
+            "lowConfidence": false,
+            "lowVariance": false
+          }
+        }
+      ],
+      "rerun": true,
+      "schemaValid": true,
+      "quality": 0.5660305455379159,
+      "source": "NETWORK",
+      "toSeller": "2.07538",
+      "refund": "2.92462"
+    }
+  ]
+}
