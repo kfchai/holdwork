@@ -1,11 +1,9 @@
-import { Ajv2020, type ErrorObject } from 'ajv/dist/2020.js';
-import addFormatsModule, { type FormatsPlugin } from 'ajv-formats';
+import { Validator, type Schema } from '@cfworker/json-schema';
 
-// ajv-formats ships a CommonJS default export; under ESM it may arrive wrapped in { default }.
-const addFormats = ((addFormatsModule as unknown as { default?: unknown }).default ?? addFormatsModule) as FormatsPlugin;
-
-const ajv = new Ajv2020({ allErrors: true, strict: false });
-addFormats(ajv);
+// @cfworker/json-schema interprets the schema directly instead of compiling it to JavaScript.
+// Ajv compiles with `new Function`, which Cloudflare Workers forbid ("code generation from strings
+// disallowed"), so under Ajv every schema check on the Worker failed to compile and every output was
+// capped at the schema-failure ceiling. Found 2026-09-10 by the fixture study.
 
 export interface SchemaCheck {
   applicable: boolean;
@@ -19,10 +17,13 @@ export function checkSchema(schema: unknown, output: unknown): SchemaCheck {
     return { applicable: false, valid: true, errors: [] };
   }
   try {
-    const validate = ajv.compile(schema as object);
-    const valid = validate(output) as boolean;
-    const errors = (validate.errors ?? []).map((e: ErrorObject) => `${e.instancePath || '/'} ${e.message ?? ''}`.trim());
-    return { applicable: true, valid, errors };
+    const validator = new Validator(schema as Schema, '2020-12', false);
+    const result = validator.validate(output);
+    const errors = result.errors
+      // The library reports a generic "does not match schema" at the root alongside each specific error.
+      .filter((e) => !(e.instanceLocation === '#' && e.keyword === 'schema' && result.errors.length > 1))
+      .map((e) => `${e.instanceLocation.replace(/^#/, '') || '/'} ${e.error}`.trim());
+    return { applicable: true, valid: result.valid, errors };
   } catch (e) {
     return { applicable: true, valid: false, errors: [`schema could not be compiled: ${String(e)}`] };
   }

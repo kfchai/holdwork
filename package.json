@@ -42,10 +42,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
+    "@cfworker/json-schema": "^4.1.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "agents": "^0.22.0",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
     "viem": "^2.56.3",
     "zod": "^4.5.4"
   }

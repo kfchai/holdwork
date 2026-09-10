@@ -108,4 +108,17 @@ describe('auto verifier', () => {
     expect(input.output).toEqual({ v: 2 });
     expect(input.revisionIssues).toEqual(['fix A']);
   });
+  it('validates array-rooted schemas with enums and additionalProperties (fixture study shape)', () => {
+    const schema = {
+      type: 'array', minItems: 3, maxItems: 3,
+      items: { type: 'object', required: ['source_id', 'summary', 'uncertainty'], additionalProperties: false,
+        properties: { source_id: { type: 'string', enum: ['D1', 'D2', 'D3'] }, summary: { type: 'string', maxLength: 140 }, uncertainty: { type: 'string' } } },
+    };
+    const good = ['D1', 'D2', 'D3'].map((id) => ({ source_id: id, summary: 's', uncertainty: 'none' }));
+    expect(checkSchema(schema, good)).toEqual({ applicable: true, valid: true, errors: [] });
+    const bad = checkSchema(schema, [...good.slice(0, 2), { source_id: 'D9', summary: 's', uncertainty: 'none', extra: 1 }]);
+    expect(bad.valid).toBe(false);
+    expect(bad.errors.length).toBeGreaterThan(0);
+  });
+
 });
