@@ -125,7 +125,8 @@ export function contractView(c: Contract) {
     pendingClaim: c.pendingClaim ? { kind: c.pendingClaim.kind, quality: c.pendingClaim.quality, toSeller: fmt(c.pendingClaim.toSeller) } : null,
     chain: c.chain ?? null,
     verification: c.verification.map((r) => ({
-      round: r.round, reason: r.reason, verifiers: r.verifierIds, attestations: r.attestations.length,
+      round: r.round, reason: r.reason, verifiers: r.verifierIds,
+      attestations: r.attestations.map((a) => ({ verifierId: a.verifierId, quality: a.quality, confidence: a.confidence })),
       deadline: new Date(r.deadline).toISOString(), result: r.result ?? null,
     })),
     calibrationSample: c.calibrationSample ?? null,

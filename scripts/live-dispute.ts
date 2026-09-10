@@ -69,7 +69,7 @@ let view = disputed;
 for (let i = 0; i < 40 && view.state !== 'SETTLED'; i++) {
   await new Promise((r) => setTimeout(r, 10_000));
   view = await call('get_contract', { contractId: task.id });
-  process.stdout.write(`  t+${Math.round((Date.now() - t0) / 1000)}s state=${view.state} rounds=${view.verification.length} attestations=${view.verification.at(-1).attestations}\n`);
+  process.stdout.write(`  t+${Math.round((Date.now() - t0) / 1000)}s state=${view.state} rounds=${view.verification.length} attestations=${view.verification.at(-1).attestations.length}\n`);
 }
 
 console.log('\nfinal state:', view.state);
